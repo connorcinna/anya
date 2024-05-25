@@ -21,7 +21,7 @@ SDL_Surface* g_surface = nullptr;
 //the image to be loaded on the surface
 SDL_Surface* g_image = nullptr; 
 
-static evp::EventProcessor = new evp::EventProcessor();
+static EventProcessor::EventProcessor = new EventProcessor::EventProcessor();
 
 std::string bin_path;
 

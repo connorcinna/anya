@@ -1,15 +1,11 @@
 #include "EventProcessor.h"
 
-EventProcessor::EventProcessor() : event_map()
-{
-	event_map = 
-	{
-		{SDL_QUIT, process_quit()},
-		{SDL_MOUSEMOTION, process_mouse_motion()},
-		{SDL_DISPLAYEVENT, process_display()}
-	};
-}
-
+EventProcessor::EventProcessor() : event_map 
+		{
+			{SDL_QUIT, process_quit }},
+			{SDL_MOUSEMOTION, process_mouse_motion()},
+			{SDL_DISPLAYEVENT, process_display()}
+		} { } 
 //generic event processor - the only instance where event_map is accessed
 //child classes should simply push their own methods into the map and allow this
 //method to execute them
