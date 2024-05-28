@@ -21,7 +21,8 @@ SDL_Surface* g_surface = nullptr;
 //the image to be loaded on the surface
 SDL_Surface* g_image = nullptr; 
 
-static EventProcessor::EventProcessor = new EventProcessor::EventProcessor();
+//reference to the event processor
+EventProcessor evp;
 
 std::string bin_path;
 
@@ -33,7 +34,7 @@ bool load_image(std::string bin_path, std::string img_path)
 	//replace forward slashes with back slashes
 	#endif
 	#ifdef _WIN32
-	//default, i guess, so do nothing?
+	//default
 	#endif
 	std::string load_path = bin_path + img_path;
 	SDL_Log("load_path: %s\n", load_path.c_str());
@@ -52,10 +53,6 @@ void close()
 	//Quit SDL subsystems
 	SDL_Quit();
 	exit(0);
-}
-void process_mouse_motion()
-{
-
 }
 
 bool init()
@@ -79,13 +76,13 @@ bool init()
 	{
 		SDL_Log("SDL_GetWindowSurface\n");
 		return false;
-	}
-
+	} 
+	evp = EventProcessor();
 	bin_path = getcwd(nullptr, 0);
 	return true;
 }
 
-int main( int argc, char* args[] )
+int main(int argc, char* args[])
 {
 
 	//Initialize SDL
@@ -112,9 +109,9 @@ int main( int argc, char* args[] )
 	{
 		while (SDL_PollEvent(&e))
 		{ 
+			evp.process_event(e);
 		}
 	}
-
     close();
 
 	return 0;
