@@ -9,6 +9,7 @@ class EventProcessor
 {
 	public:
 		EventProcessor();
+		virtual ~EventProcessor();
 		// generic SDL events
 		void process_event(SDL_Event e);
 		void process_quit();

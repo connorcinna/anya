@@ -11,7 +11,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 link_directories("C:/sdl2_mingw32/lib")
 link_directories("C:/MinGW/lib")
 
-add_compile_options(--target=i686-pc-windows-gnu)
+add_compile_options(--target=i686-pc-windows-gnu -g -Wall -Wextra -pedantic)
 
 add_executable(anya 
 	${CMAKE_BINARY_DIR}/src/core.cpp

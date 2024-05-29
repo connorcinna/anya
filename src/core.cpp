@@ -7,11 +7,13 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <functional>
+#include <csignal>
 #include "EventProcessor.h"
+#include "SDL_stdinc.h"
 
 //Screen dimension constants
-const int SCREEN_HEIGHT = 2000;
-const int SCREEN_WIDTH = 2000;
+const int SCREEN_HEIGHT = 1139;
+const int SCREEN_WIDTH = 727;
 
 
 //the window we're rendering
@@ -22,11 +24,22 @@ SDL_Surface* g_surface = nullptr;
 SDL_Surface* g_image = nullptr; 
 
 //reference to the event processor
-EventProcessor evp;
+EventProcessor* evp;
 
 std::string bin_path;
 
 const std::string img_path = R"(..\resources\peeta_muda.bmp)"; 
+
+void signal_handler(int signum)
+{
+	switch(signum)
+	{
+		case SIGABRT:
+			SDL_Log("SIGABRT received\n");
+			abort();
+			break;
+	}
+}
 
 bool load_image(std::string bin_path, std::string img_path)
 {
@@ -42,8 +55,9 @@ bool load_image(std::string bin_path, std::string img_path)
 	return (g_image = SDL_LoadBMP(load_path.c_str())) != nullptr;
 }
 
-void close()
+static void sdl_close()
 {
+	SDL_Log("sdl_close()\n");
 	SDL_FreeSurface(g_surface);
 	g_surface = nullptr;
 	//Destroy window
@@ -52,15 +66,17 @@ void close()
 
 	//Quit SDL subsystems
 	SDL_Quit();
+	delete evp;
 	exit(0);
 }
 
 bool init()
 {
+	evp = new EventProcessor();
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
 		SDL_Log("SDL_Init\n");
-		close();
+		sdl_close();
 		return false;
 	}	
 
@@ -77,42 +93,39 @@ bool init()
 		SDL_Log("SDL_GetWindowSurface\n");
 		return false;
 	} 
-	evp = EventProcessor();
 	bin_path = getcwd(nullptr, 0);
 	return true;
 }
 
 int main(int argc, char* args[])
 {
-
-	//Initialize SDL
 	if (!init())
 	{
 		SDL_Log("init()\n");
-		close();
+		sdl_close();
 	}
+	signal(SIGABRT, signal_handler);
 
 	bin_path = SDL_GetBasePath();
 	if (!load_image(bin_path, img_path))
 	{
 		SDL_Log("load_image()\n");
-		close();
+		sdl_close();
 	}
 	
 	SDL_BlitSurface(g_image, nullptr, g_surface, nullptr);
 	SDL_UpdateWindowSurface(g_window);
     
-    //Hack to get window to stay up
     SDL_Event e; 
 	bool quit = false; 
 	while (quit == false)
 	{
 		while (SDL_PollEvent(&e))
 		{ 
-			evp.process_event(e);
+			evp->process_event(e);
 		}
 	}
-    close();
+    sdl_close();
 
 	return 0;
 }
