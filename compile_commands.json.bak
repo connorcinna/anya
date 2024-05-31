@@ -1,0 +1,14 @@
+[
+{
+  "directory": "C:/projects/anya",
+  "command": "C:\\MinGW\\bin\\c++.exe  @CMakeFiles/anya.dir/includes_CXX.rsp --target=i686-pc-windows-gnu -g -Wall -Wextra -pedantic -o CMakeFiles\\anya.dir\\src\\core.cpp.obj -c C:\\projects\\anya\\src\\core.cpp",
+  "file": "C:/projects/anya/src/core.cpp",
+  "output": "CMakeFiles/anya.dir/src/core.cpp.obj"
+},
+{
+  "directory": "C:/projects/anya",
+  "command": "C:\\MinGW\\bin\\c++.exe  @CMakeFiles/anya.dir/includes_CXX.rsp --target=i686-pc-windows-gnu -g -Wall -Wextra -pedantic -o CMakeFiles\\anya.dir\\src\\EventProcessor.cpp.obj -c C:\\projects\\anya\\src\\EventProcessor.cpp",
+  "file": "C:/projects/anya/src/EventProcessor.cpp",
+  "output": "CMakeFiles/anya.dir/src/EventProcessor.cpp.obj"
+}
+]

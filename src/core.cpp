@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <SDL_events.h>
+#include <GL\GLU.h>
 #include <stdio.h>
 #include <string>
 #include <cstring>
@@ -10,6 +11,7 @@
 #include <csignal>
 #include "EventProcessor.h"
 #include "SDL_stdinc.h"
+#include "SDL_opengl.h"
 
 //Screen dimension constants
 const int SCREEN_HEIGHT = 1139;
@@ -28,7 +30,14 @@ EventProcessor* evp;
 
 std::string bin_path;
 
-const std::string img_path = R"(..\resources\peeta_muda.bmp)"; 
+//const std::string img_path = R"(..\resources\peeta_muda.bmp)"; 
+
+void usage() 
+{
+	SDL_Log("Usage: anya.exe -w [width] -h [height]\n");
+	SDL_Log("Example: anya.exe -w 1920 -h 1080\n");
+	exit(-1);
+}
 
 void signal_handler(int signum)
 {
@@ -97,8 +106,33 @@ bool init()
 	return true;
 }
 
-int main(int argc, char* args[])
+bool init_gl()
 {
+	return false;
+}
+
+int main(int argc, char* argv[])
+{
+	int w_width = 0, w_height = 0;
+	int opt;
+	while((opt = getopt(argc, argv, "w:h:")))
+	{
+		switch (opt)
+		{
+			case 'w':
+				w_width = atoi(optarg);
+				break;
+			case 'h':
+				w_height = atoi(optarg);
+				break;
+			default:
+				//unrecognized argument
+				usage();
+//				w_width = 1920;
+//				w_height = 1080;
+				break;
+		}
+	}
 	if (!init())
 	{
 		SDL_Log("init()\n");
@@ -107,11 +141,11 @@ int main(int argc, char* args[])
 	signal(SIGABRT, signal_handler);
 
 	bin_path = SDL_GetBasePath();
-	if (!load_image(bin_path, img_path))
-	{
-		SDL_Log("load_image()\n");
-		sdl_close();
-	}
+//	if (!load_image(bin_path, img_path))
+//	{
+//		SDL_Log("load_image()\n");
+//		sdl_close();
+//	}
 	
 	SDL_BlitSurface(g_image, nullptr, g_surface, nullptr);
 	SDL_UpdateWindowSurface(g_window);
