@@ -76,58 +76,58 @@ EventProcessor::~EventProcessor()
 //method to execute them
 void EventProcessor::process_event(SDL_Event e)
 {
-	SDL_Log("Processing event: %x\n", e.type);
+//	SDL_Log("Processing event: %x\n", e.type);
 	event_map.at(e.type)();
 }
 void EventProcessor::process_quit()
 {
-//	sdl_close();
-	SDL_Log("Processing quit\n");
+	//let the OS free the stuff out of context, because we are quitting out anwyays
+	SDL_Quit();
+	exit(0);
 }
 void EventProcessor::process_display()
 {
-	SDL_Log("Processing display\n");
 }
 void EventProcessor::process_window()
 {
-	SDL_Log("Processing window\n");
+
 }
 void EventProcessor::process_sys_wm()
 {
-	SDL_Log("Processing sys wm\n");
+
 }
 void EventProcessor::process_keydown()
 {
-	SDL_Log("Processing keydown\n");
+
 }
 void EventProcessor::process_keyup()
 {
-	SDL_Log("Processing keyup\n");
+
 }
 void EventProcessor::process_textediting()
 {
-	SDL_Log("Processing text editing\n");
+
 }
 void EventProcessor::process_textinput()
 {
-	SDL_Log("Processing textinput\n");
+
 }
 void EventProcessor::process_keymap_changed()
 {
-	SDL_Log("Processing keymap changed\n");
+
 }
 void EventProcessor::process_mouse_motion()
 {
-	SDL_Log("Processing mouse motion");
+
 
 }
 void EventProcessor::process_mouse_button_down()
 {
-	SDL_Log("Processing mouse button down\n");
+
 }
 void EventProcessor::process_mouse_button_up()
 {
-	SDL_Log("Processing mouse button up\n");
+
 }
 void EventProcessor::process_mouse_wheel()
 {

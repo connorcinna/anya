@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <SDL_events.h>
 #include <GL\GLU.h>
+#include <SDL_video.h>
 #include <stdio.h>
 #include <string>
 #include <cstring>
@@ -13,15 +14,10 @@
 #include "SDL_stdinc.h"
 #include "SDL_opengl.h"
 
-//Screen dimension constants
-const int SCREEN_HEIGHT = 1139;
-const int SCREEN_WIDTH = 727;
-
-
 //the window we're rendering
 SDL_Window* g_window = nullptr;
 //the surface contained by the window
-SDL_Surface* g_surface = nullptr;
+SDL_GLContext g_context;
 //the image to be loaded on the surface
 SDL_Surface* g_image = nullptr; 
 
@@ -29,8 +25,6 @@ SDL_Surface* g_image = nullptr;
 EventProcessor* evp;
 
 std::string bin_path;
-
-//const std::string img_path = R"(..\resources\peeta_muda.bmp)"; 
 
 void usage() 
 {
@@ -47,6 +41,32 @@ void signal_handler(int signum)
 			SDL_Log("SIGABRT received\n");
 			abort();
 			break;
+	}
+}
+
+//draw a rectangle to the screen
+void render()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glBegin(GL_QUADS);
+	glVertex2f(-0.5f, -0.5f);
+	glVertex2f(0.5f, -0.5f);
+	glVertex2f(0.5f, 0.5f);
+	glVertex2f(-0.5f, 0.5f);
+	glEnd();
+}
+
+void update()
+{
+	SDL_Event e;
+	for(;;)
+	{
+		while (SDL_PollEvent(&e))
+		{ 
+			evp->process_event(e);
+		}
+		render();
+		SDL_GL_SwapWindow(g_window);
 	}
 }
 
@@ -67,8 +87,8 @@ bool load_image(std::string bin_path, std::string img_path)
 static void sdl_close()
 {
 	SDL_Log("sdl_close()\n");
-	SDL_FreeSurface(g_surface);
-	g_surface = nullptr;
+//	SDL_FreeGLContext(g_context);
+	g_context = nullptr;
 	//Destroy window
 	SDL_DestroyWindow(g_window);
 	g_window = nullptr;
@@ -79,7 +99,34 @@ static void sdl_close()
 	exit(0);
 }
 
-bool init()
+bool init_gl()
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	if (glGetError() != GL_NO_ERROR)
+	{
+		SDL_Log("glGetError()\n");
+		return false;
+	}
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	if (glGetError() != GL_NO_ERROR)
+	{
+		SDL_Log("glGetError()\n");
+		return false;
+	}
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	if (glGetError() != GL_NO_ERROR)
+	{
+		SDL_Log("glGetError()\n");
+		return false;
+	}
+
+	return true;
+}
+
+bool init(int w_width, int w_height)
 {
 	evp = new EventProcessor();
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -89,33 +136,41 @@ bool init()
 		return false;
 	}	
 
-	g_window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
+	g_window = SDL_CreateWindow("anya", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w_width, w_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 
 	if (!g_window)
 	{
 		SDL_Log("SDL_CreateWindow\n");
 		return false;
 	}
-	g_surface = SDL_GetWindowSurface(g_window);
-	if (!g_surface)
+	g_context = SDL_GL_CreateContext(g_window);
+	if (!g_context)
 	{
-		SDL_Log("SDL_GetWindowSurface\n");
+		SDL_Log("SDL_GL_CreateContext()\n");
 		return false;
 	} 
+	//set vsync
+	SDL_GL_SetSwapInterval(1);
+	
+	if (!init_gl())
+	{
+		SDL_Log("init_gl()\n");
+		return false;
+	}
+
 	bin_path = getcwd(nullptr, 0);
 	return true;
 }
 
-bool init_gl()
-{
-	return false;
-}
 
 int main(int argc, char* argv[])
 {
 	int w_width = 0, w_height = 0;
 	int opt;
-	while((opt = getopt(argc, argv, "w:h:")))
+	while((opt = getopt(argc, argv, "w:h:")) != -1)
 	{
 		switch (opt)
 		{
@@ -128,37 +183,23 @@ int main(int argc, char* argv[])
 			default:
 				//unrecognized argument
 				usage();
-//				w_width = 1920;
-//				w_height = 1080;
 				break;
 		}
 	}
-	if (!init())
+	SDL_Log("w_width: %d - w_height: %d\n", w_width, w_height);
+	if (!init(w_width, w_height))
 	{
 		SDL_Log("init()\n");
 		sdl_close();
 	}
 	signal(SIGABRT, signal_handler);
 
-	bin_path = SDL_GetBasePath();
-//	if (!load_image(bin_path, img_path))
-//	{
-//		SDL_Log("load_image()\n");
-//		sdl_close();
-//	}
-	
-	SDL_BlitSurface(g_image, nullptr, g_surface, nullptr);
+//	bin_path = SDL_GetBasePath();
 	SDL_UpdateWindowSurface(g_window);
     
-    SDL_Event e; 
-	bool quit = false; 
-	while (quit == false)
-	{
-		while (SDL_PollEvent(&e))
-		{ 
-			evp->process_event(e);
-		}
-	}
+	//main loop
+	update();
+	
     sdl_close();
 
 	return 0;
