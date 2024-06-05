@@ -12,12 +12,13 @@ add_compile_options(--target=i686-pc-windows-gnu -g -Wall -Wextra -pedantic)
 
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
-#find_package(GLEW REQUIRED)
 
 add_executable(anya 
 	${CMAKE_BINARY_DIR}/src/core.cpp
 	${CMAKE_BINARY_DIR}/src/EventProcessor.cpp
 	${CMAKE_BINARY_DIR}/src/EventProcessor.h
+	${CMAKE_BINARY_DIR}/src/GameLogic.h
+	${CMAKE_BINARY_DIR}/src/GameLogic.cpp
 )
 
 

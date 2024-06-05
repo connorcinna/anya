@@ -10,9 +10,10 @@
 #include <unordered_map>
 #include <functional>
 #include <csignal>
-#include "EventProcessor.h"
 #include "SDL_stdinc.h"
 #include "SDL_opengl.h"
+#include "EventProcessor.h"
+#include "GameLogic.h"
 
 //the window we're rendering
 SDL_Window* g_window = nullptr;
@@ -20,11 +21,11 @@ SDL_Window* g_window = nullptr;
 SDL_GLContext g_context;
 //the image to be loaded on the surface
 SDL_Surface* g_image = nullptr; 
-
 //reference to the event processor
 EventProcessor* evp;
+//reference to game grid
+Grid* grid;
 
-std::string bin_path;
 
 void usage() 
 {
@@ -65,23 +66,9 @@ void update()
 		{ 
 			evp->process_event(e);
 		}
-		render();
+		render_grid(grid);
 		SDL_GL_SwapWindow(g_window);
 	}
-}
-
-bool load_image(std::string bin_path, std::string img_path)
-{
-	#ifdef _LINUX
-	//replace forward slashes with back slashes
-	#endif
-	#ifdef _WIN32
-	//default
-	#endif
-	std::string load_path = bin_path + img_path;
-	SDL_Log("load_path: %s\n", load_path.c_str());
-	SDL_Log("img_path: %s\n", img_path.c_str());
-	return (g_image = SDL_LoadBMP(load_path.c_str())) != nullptr;
 }
 
 static void sdl_close()
@@ -161,7 +148,9 @@ bool init(int w_width, int w_height)
 		return false;
 	}
 
-	bin_path = getcwd(nullptr, 0);
+	Config config = read_config();
+	init_grid(&config, grid);
+
 	return true;
 }
 
@@ -194,7 +183,6 @@ int main(int argc, char* argv[])
 	}
 	signal(SIGABRT, signal_handler);
 
-//	bin_path = SDL_GetBasePath();
 	SDL_UpdateWindowSurface(g_window);
     
 	//main loop
