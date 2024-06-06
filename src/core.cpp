@@ -24,7 +24,7 @@ SDL_Surface* g_image = nullptr;
 //reference to the event processor
 EventProcessor* evp;
 //reference to game grid
-Grid* grid;
+GameLogic::Grid* grid;
 
 
 void usage() 
@@ -66,12 +66,12 @@ void update()
 		{ 
 			evp->process_event(e);
 		}
-		render_grid(grid);
+		grid->render_grid();
 		SDL_GL_SwapWindow(g_window);
 	}
 }
 
-static void sdl_close()
+void sdl_close()
 {
 	SDL_Log("sdl_close()\n");
 //	SDL_FreeGLContext(g_context);
@@ -148,8 +148,15 @@ bool init(int w_width, int w_height)
 		return false;
 	}
 
-	Config config = read_config();
-	init_grid(&config, grid);
+	GameLogic::Config* config = new GameLogic::Config();
+	SDL_Log("config: %d, %d\n", config->width, config->height);
+	for (auto c : config->cells)
+	{
+		SDL_Log("cell: %d, %d\n", c.pos.x, c.pos.y);
+	}
+	grid = new GameLogic::Grid(config);
+	delete config;
+	//init_grid(config, grid);
 
 	return true;
 }

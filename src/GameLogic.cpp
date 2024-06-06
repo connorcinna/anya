@@ -4,66 +4,85 @@
 #include <GL\GLU.h>
 #include "GameLogic.h"
 
-//allocate memory for the grid
-void init_grid(Config* config, Grid* grid)
+using namespace GameLogic;
+
+Grid::Grid(Config* config)
 {
-	grid->width = config->width;
-	grid->height = config->height;
-	grid->cells = std::vector<std::vector<Cell>>();
+	this->width = config->width;
+	this->height = config->height;
+	this->cells = std::vector<std::vector<Cell>>();
 	//TODO: improve this - O(N^3) is nasty
 	for (int i = 0; i < config->width; i++)
 	{
-		grid->cells.push_back(std::vector<Cell>());
+		this->cells.push_back(std::vector<Cell>());
 		for (int j = 0; j < config->height; ++j)
 		{
+			this->cells[i].push_back(Cell({i, j}, false));
 			for (auto c : config->cells)
 			{
 				if (i == c.pos.x && j == c.pos.y)
 				{
-					grid->cells[i][j].alive = true;
+					this->cells[i][j].alive = true;
 				}
 			}
-			grid->cells[i][j].pos = {i, j};
 		}
 	}
 }
 
-//call update_cell for each cell in the grid
-void update_grid(Grid* grid)
+Grid::~Grid()
 {
-	for (int i = 0; i < grid->width; ++i)
+}
+
+//call update_cell for each cell in the grid
+void Grid::update_grid()
+{
+	for (int i = 0; i < this->width; ++i)
 	{
-		for (int j = 0; j < grid->height; ++j)
+		for (int j = 0; j < this->height; ++j)
 		{
-			update_cell(grid, &grid->cells[i][j]);
+			this->cells[i][j].update_cell(this);
 		}
 	}
 }
 
 //draw the grid in opengl -- call render_cell for each cell in the grid
-void render_grid(Grid* grid)
+void Grid::render_grid()
 {
-	for (int i = 0; i < grid->width; ++i)
+	for (int i = 0; i < this->width; ++i)
 	{
-		for (int j = 0; j < grid->height; ++j)
+		for (int j = 0; j < this->height; ++j)
 		{
-			render_cell(&grid->cells[i][j]);
+			this->cells[i][j].render_cell();
 		}
 	}
 }
 
-//draw a single cell
-void render_cell(Cell* cell)
+Cell::Cell()
+{
+	pos = {0, 0};
+	alive = false;
+}
+Cell::Cell(Pos pos, bool alive)
+{
+	this->pos = pos;
+	this->alive = alive;
+}
+Cell::~Cell()
 {
 
-	if (cell->alive)
+}
+
+//draw a single cell
+void Cell::render_cell()
+{
+	if (this->alive)
 	{
 		glBegin(GL_QUADS);
 		{
-			glVertex2f(cell->pos.x, cell->pos.y);
-			glVertex2f(cell->pos.x, cell->pos.y + 1);
-			glVertex2f(cell->pos.x + 1, cell->pos.y + 1);
-			glVertex2f(cell->pos.x + 1, cell->pos.y);
+			glVertex2f(this->pos.x, this->pos.y);
+			glVertex2f(this->pos.x, this->pos.y + 1);
+			glVertex2f(this->pos.x + 1, this->pos.y + 1);
+			glVertex2f(this->pos.x + 1, this->pos.y);
 		}
 		glEnd();
 	}
@@ -75,65 +94,65 @@ void render_cell(Cell* cell)
 // 2. Any live cell with two or three live neighbours lives on to the next generation
 // 3. Any live cell with more than three live neighbours dies, as if by overpopulation
 // 4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction
-void update_cell(Grid* grid, Cell* cell)
+void Cell::update_cell(Grid* grid)
 {
-	switch (nearby_cells(grid, cell))
+	switch (nearby_cells(grid))
 	{
 		case 0:
 		case 1:
-			cell->alive = false;
+			this->alive = false;
 			break;
 		case 2:
 			break;
 		case 3:
-			cell->alive = true;
+			this->alive = true;
 			break;
 		default: 
-			cell->alive = false;
+			this->alive = false;
 	}
 }
 
 //count the number of nearby cells that are alive
-int nearby_cells(Grid* grid, Cell* cell)
+int Cell::nearby_cells(Grid* grid)
 {
 	int ret = 0;
 	// down left
-	if (grid->cells[cell->pos.x - 1][cell->pos.y - 1].alive) 
+	if (grid->cells[this->pos.x - 1][this->pos.y - 1].alive) 
 	{
 		++ret;
 	}
 	// up left
-	if (grid->cells[cell->pos.x - 1][cell->pos.y + 1].alive)
+	if (grid->cells[this->pos.x - 1][this->pos.y + 1].alive)
 	{
 		++ret;
 	}
 	// up right
-	if (grid->cells[cell->pos.x + 1][cell->pos.y + 1].alive)
+	if (grid->cells[this->pos.x + 1][this->pos.y + 1].alive)
 	{
 		++ret;
 	}
 	// down right 
-	if (grid->cells[cell->pos.x + 1][cell->pos.y - 1].alive) 
+	if (grid->cells[this->pos.x + 1][this->pos.y - 1].alive) 
 	{
 		++ret;
 	}
 	//down
-	if (grid->cells[cell->pos.x][cell->pos.y - 1].alive) 
+	if (grid->cells[this->pos.x][this->pos.y - 1].alive) 
 	{
 		++ret;
 	}
 	//up
-	if (grid->cells[cell->pos.x][cell->pos.y + 1].alive) 
+	if (grid->cells[this->pos.x][this->pos.y + 1].alive) 
 	{
 		++ret;
 	}
 	//left
-	if (grid->cells[cell->pos.x - 1][cell->pos.y].alive) 
+	if (grid->cells[this->pos.x - 1][this->pos.y].alive) 
 	{
 		++ret;
 	}
 	//right
-	if (grid->cells[cell->pos.x + 1][cell->pos.y].alive) 
+	if (grid->cells[this->pos.x + 1][this->pos.y].alive) 
 	{
 		++ret;
 	}
@@ -141,11 +160,8 @@ int nearby_cells(Grid* grid, Cell* cell)
 	return ret;
 }
 
-//read in resources/game.config to set up the map
-Config read_config(void)
+Config::Config()
 {
-	Config config;
-
 	std::ifstream ifs("resources/game.config");
 	std::string line;
 	while (std::getline(ifs, line))
@@ -153,8 +169,8 @@ Config read_config(void)
 		if (line.find("Map Size") != std::string::npos)
 		{
 			std::getline(ifs, line);
-			config.width = std::stoi(line);
-			config.height = std::stoi(line);
+			this->width = std::stoi(line);
+			this->height = std::stoi(line);
 			continue;
 		}
 		if (line.find("Cells") != std::string::npos)
@@ -177,10 +193,12 @@ Config read_config(void)
 					}
 					++i;
 				}
-				config.cells.push_back(cell);
+				this->cells.push_back(cell);
 			}
 		}
 	}
-	return config;
 }
 
+Config::~Config()
+{
+}

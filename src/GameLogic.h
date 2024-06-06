@@ -2,38 +2,51 @@
 #include <stdlib.h>
 #include <vector>
 
-typedef struct
+namespace GameLogic
 {
-	int x;
-	int y;
-} Pos;
+	class Cell;
+	class Config;
+	class Grid;
 
-typedef struct
-{
-	Pos pos;	
-	bool alive;
-} Cell;
+	typedef struct
+	{
+		int x;
+		int y;
+	} Pos;
 
-typedef struct
-{
-	int width;
-	int height;
-	std::vector<std::vector<Cell>> cells;
-} Grid;
+	class Cell
+	{
+		public:
+			Cell();
+			Cell(Pos pos, bool alive);
+			virtual ~Cell();
+			int nearby_cells(Grid* grid);
+			void update_cell(Grid* grid);
+			//TODO: put this into a render class!
+			void render_cell();
+			Pos pos;
+			bool alive;
+	};
+	class Config
+	{
+		public:
+			Config();
+			virtual ~Config();
+			int width;
+			int height;
+			std::vector<Cell> cells;
+	};
+	class Grid
+	{
+		public:
+			Grid(Config* config);
+			virtual ~Grid();
+	     	void update_grid();
+			//TODO: put this into a render class!
+			void render_grid();
+			int width;
+			int height;
+			std::vector<std::vector<Cell>> cells;
+	};
+}
 
-//this is kind of stupid, because we already have Grid, but it didn't make sense
-//to return a whole Grid just to create another grid
-typedef struct 
-{
-	int width;
-	int height;
-	std::vector<Cell> cells;
-} Config;
-
-void init_grid(Config* config, Grid* grid);
-void update_grid(Grid* grid);
-void render_grid(Grid* grid);
-void update_cell(Grid* grid, Cell* cell);
-void render_cell(Cell* cell);
-int nearby_cells(Grid* grid, Cell* cell);
-Config read_config(void);
