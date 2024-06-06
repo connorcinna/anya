@@ -52,7 +52,7 @@ void Grid::render_grid()
 	{
 		for (int j = 0; j < this->height; ++j)
 		{
-			this->cells[i][j].render_cell();
+			this->cells[i][j].render_cell(this->width, this->height);
 		}
 	}
 }
@@ -73,19 +73,16 @@ Cell::~Cell()
 }
 
 //draw a single cell
-void Cell::render_cell()
+void Cell::render_cell(int width, int height)
 {
-	if (this->alive)
-	{
-		glBegin(GL_QUADS);
-		{
-			glVertex2f(this->pos.x, this->pos.y);
-			glVertex2f(this->pos.x, this->pos.y + 1);
-			glVertex2f(this->pos.x + 1, this->pos.y + 1);
-			glVertex2f(this->pos.x + 1, this->pos.y);
-		}
-		glEnd();
-	}
+	glBegin(GL_QUADS);
+	this->alive ? glColor3f(1.0f, 1.0f, 1.0f) : glColor3f(0.0f, 0.0f, 0.0f);
+	//TODO: this is probably not good practice
+	glVertex2f(-1.0f * this->pos.x/width, -1.0f * this->pos.y/height);
+	glVertex2f(-1.0f * this->pos.x/width, this->pos.y/(float)height);
+	glVertex2f(this->pos.x/(float)width, -1.0f * this->pos.y/(float)height);
+	glVertex2f(this->pos.x/(float)width, this->pos.y/(float)height);
+	glEnd();
 }
 
 //main loop logic

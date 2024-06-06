@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <functional>
 #include <csignal>
+#include <chrono>
+#include <thread>
 #include "SDL_stdinc.h"
 #include "SDL_opengl.h"
 #include "EventProcessor.h"
@@ -45,18 +47,6 @@ void signal_handler(int signum)
 	}
 }
 
-//draw a rectangle to the screen
-void render()
-{
-	glClear(GL_COLOR_BUFFER_BIT);
-	glBegin(GL_QUADS);
-	glVertex2f(-0.5f, -0.5f);
-	glVertex2f(0.5f, -0.5f);
-	glVertex2f(0.5f, 0.5f);
-	glVertex2f(-0.5f, 0.5f);
-	glEnd();
-}
-
 void update()
 {
 	SDL_Event e;
@@ -68,6 +58,7 @@ void update()
 		}
 		grid->render_grid();
 		SDL_GL_SwapWindow(g_window);
+		SDL_Delay(1000);
 	}
 }
 

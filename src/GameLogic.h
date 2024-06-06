@@ -23,7 +23,7 @@ namespace GameLogic
 			int nearby_cells(Grid* grid);
 			void update_cell(Grid* grid);
 			//TODO: put this into a render class!
-			void render_cell();
+			void render_cell(int width, int height);
 			Pos pos;
 			bool alive;
 	};

@@ -8,7 +8,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(GLEW_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
 set(GLEW_LIBRARY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
-add_compile_options(--target=i686-pc-windows-gnu -g -Wall -Wextra -pedantic)
+add_compile_options(--target=i686-pc-windows-gnu -std=c++17 -g -Wall -Wextra -pedantic)
 
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
