@@ -56,6 +56,7 @@ void update()
 		{ 
 			evp->process_event(e);
 		}
+		grid->update_grid();
 		grid->render_grid();
 		SDL_GL_SwapWindow(g_window);
 		SDL_Delay(1000);
@@ -147,7 +148,6 @@ bool init(int w_width, int w_height)
 	}
 	grid = new GameLogic::Grid(config);
 	delete config;
-	//init_grid(config, grid);
 
 	return true;
 }

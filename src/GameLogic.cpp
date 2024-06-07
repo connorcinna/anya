@@ -75,12 +75,13 @@ Cell::~Cell()
 //draw a single cell
 void Cell::render_cell(int width, int height)
 {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBegin(GL_QUADS);
 	this->alive ? glColor3f(1.0f, 1.0f, 1.0f) : glColor3f(0.0f, 0.0f, 0.0f);
 	//TODO: this is probably not good practice
-	glVertex2f(-1.0f * this->pos.x/width, -1.0f * this->pos.y/height);
-	glVertex2f(-1.0f * this->pos.x/width, this->pos.y/(float)height);
-	glVertex2f(this->pos.x/(float)width, -1.0f * this->pos.y/(float)height);
+	glVertex2f(-1.0f * (this->pos.x/(float)width), -1.0f * (this->pos.y/(float)height));
+	glVertex2f(-1.0f * (this->pos.x/(float)width), this->pos.y/(float)height);
+	glVertex2f(this->pos.x/(float)width, (-1.0f * this->pos.y/(float)height));
 	glVertex2f(this->pos.x/(float)width, this->pos.y/(float)height);
 	glEnd();
 }
@@ -114,46 +115,57 @@ int Cell::nearby_cells(Grid* grid)
 {
 	int ret = 0;
 	// down left
-	if (grid->cells[this->pos.x - 1][this->pos.y - 1].alive) 
-	{
-		++ret;
-	}
+		if (this->pos.x - 1 >= 0 &&
+			this->pos.y - 1 >= 0 &&
+			grid->cells.at(this->pos.x - 1).at(this->pos.y - 1).alive) 
+		{
+			++ret;
+		}
 	// up left
-	if (grid->cells[this->pos.x - 1][this->pos.y + 1].alive)
-	{
-		++ret;
-	}
-	// up right
-	if (grid->cells[this->pos.x + 1][this->pos.y + 1].alive)
-	{
-		++ret;
-	}
-	// down right 
-	if (grid->cells[this->pos.x + 1][this->pos.y - 1].alive) 
-	{
-		++ret;
-	}
-	//down
-	if (grid->cells[this->pos.x][this->pos.y - 1].alive) 
-	{
-		++ret;
-	}
-	//up
-	if (grid->cells[this->pos.x][this->pos.y + 1].alive) 
-	{
-		++ret;
-	}
-	//left
-	if (grid->cells[this->pos.x - 1][this->pos.y].alive) 
-	{
-		++ret;
-	}
-	//right
-	if (grid->cells[this->pos.x + 1][this->pos.y].alive) 
-	{
-		++ret;
-	}
-
+		if (this->pos.x - 1 >= 0 &&
+			this->pos.y + 1 < grid->height &&
+			grid->cells.at(this->pos.x - 1).at(this->pos.y + 1).alive)
+		{
+			++ret;
+		}
+		// up right
+		if (this->pos.x + 1 < grid->width &&
+			this->pos.y + 1 < grid->height &&
+			grid->cells.at(this->pos.x + 1).at(this->pos.y + 1).alive)
+		{
+			++ret;
+		}
+		// down right 
+		if (this->pos.x + 1 < grid->width &&
+			this->pos.y - 1 >= 0 &&
+			grid->cells.at(this->pos.x + 1).at(this->pos.y - 1).alive) 
+		{
+			++ret;
+		}
+		//down
+		if (this->pos.y - 1 >= 0 &&
+			grid->cells.at(this->pos.x).at(this->pos.y - 1).alive) 
+		{
+			++ret;
+		}
+		//up
+		if (this->pos.y + 1 < grid->height &&
+			grid->cells.at(this->pos.x).at(this->pos.y + 1).alive) 
+		{
+			++ret;
+		}
+		//left
+		if (this->pos.x - 1 >= 0 &&
+			grid->cells.at(this->pos.x - 1).at(this->pos.y).alive) 
+		{
+			++ret;
+		}
+		//right
+		if (this->pos.x + 1 < grid->width &&
+			grid->cells.at(this->pos.x + 1).at(this->pos.y).alive) 
+		{
+			++ret;
+		}
 	return ret;
 }
 
