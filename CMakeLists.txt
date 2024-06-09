@@ -11,9 +11,6 @@ add_compile_options(--target=i686-pc-windows-gnu -std=c++17 -g -Wall -Wextra -pe
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-#add_library(glew SHARED IMPORTED)
-#set_target_properties(glew PROPERTIES IMPORTED_LOCATION "C:/glew-2.2.0/lib/Release/Win32/glew32.lib")
-
 add_executable(anya 
 	${CMAKE_BINARY_DIR}/src/core.cpp
 	${CMAKE_BINARY_DIR}/src/EventProcessor.cpp
