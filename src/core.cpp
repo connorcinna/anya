@@ -1,7 +1,3 @@
-#include <SDL.h>
-#include <SDL_events.h>
-#include <GL\GLU.h>
-#include <SDL_video.h>
 #include <stdio.h>
 #include <string>
 #include <cstring>
@@ -12,8 +8,13 @@
 #include <csignal>
 #include <chrono>
 #include <thread>
-#include "SDL_stdinc.h"
-#include "SDL_opengl.h"
+#include <GL\glew.h>
+#include <GL\glu.h>
+#include <SDL.h>
+#include <SDL_events.h>
+#include <SDL_opengl.h>
+#include <SDL_video.h>
+#include <SDL_stdinc.h>
 #include "EventProcessor.h"
 #include "GameLogic.h"
 
@@ -23,6 +24,11 @@ SDL_Window* g_window = nullptr;
 SDL_GLContext g_context;
 //the image to be loaded on the surface
 SDL_Surface* g_image = nullptr; 
+//some GL stuff
+GLuint g_program_id = 0;
+GLint gVertexPos2DLocation = -1;
+GLuint gVBO = 0;
+GLuint gIBO = 0;
 //reference to the event processor
 EventProcessor* evp;
 //reference to game grid
@@ -56,9 +62,24 @@ void update()
 		{ 
 			evp->process_event(e);
 		}
+		glClear(GL_COLOR_BUFFER_BIT);
+		//bind program
+		glUseProgram(g_program_id);
+		//enable vertex position 
+		glEnableVertexAttribArray(gVertexPos2DLocation);
+		//set vertex data 
+		glBindBuffer(GL_ARRAY_BUFFER, gVBO);
+		glVertexAttribPointer(gVertexPos2DLocation, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), nullptr);
+		//set index data and render 
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
+
+		glDisableVertexAttribArray(gVertexPos2DLocation);
+
 		grid->update_grid();
 		grid->render_grid();
 		SDL_GL_SwapWindow(g_window);
+		//unbind shader program
+		glUseProgram(NULL);
 		SDL_Delay(1000);
 	}
 }
@@ -66,7 +87,6 @@ void update()
 void sdl_close()
 {
 	SDL_Log("sdl_close()\n");
-//	SDL_FreeGLContext(g_context);
 	g_context = nullptr;
 	//Destroy window
 	SDL_DestroyWindow(g_window);
@@ -80,27 +100,75 @@ void sdl_close()
 
 bool init_gl()
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	if (glGetError() != GL_NO_ERROR)
+	g_program_id = glCreateProgram();
+	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER); 
+	const GLchar* vertex_shader_source[] =
 	{
-		SDL_Log("glGetError()\n");
+		"#version 140\nin vec2 LVertexPos2D; void main() { gl_Position = vec4( LVertexPos2D.x, LVertexPos2D.y, 0, 1 ); }"
+	};
+	glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
+	glCompileShader(vertex_shader);
+	GLint vertex_shader_compiled = GL_FALSE;
+	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &vertex_shader_compiled);
+	if (vertex_shader_compiled != GL_TRUE)
+	{
+		SDL_Log("vertex_shader_compiled\n");
 		return false;
 	}
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	if (glGetError() != GL_NO_ERROR)
+	glAttachShader(g_program_id, vertex_shader);
+	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	const GLchar* fragment_shader_source[] =
 	{
-		SDL_Log("glGetError()\n");
+		"#version 140\nout vec4 FragColor; void main() { FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ); }"
+	};
+	glShaderSource(fragment_shader, 1, fragment_shader_source, NULL);
+	glCompileShader(fragment_shader);
+	GLint fragment_shader_compiled = GL_FALSE;
+	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &fragment_shader_compiled);
+	if (fragment_shader_compiled != GL_TRUE)
+	{
+		SDL_Log("fragment_shader_compiled\n");
 		return false;
 	}
+	glAttachShader(g_program_id, fragment_shader);
+	glLinkProgram(g_program_id);
+	GLint program_linked = GL_FALSE;
+	glGetProgramiv(g_program_id, GL_LINK_STATUS, &program_linked);
+	if (program_linked != GL_TRUE)
+	{
+		SDL_Log("program_linked\n");
+		return false;
+	}
+	//get vertex attribute location
+	gVertexPos2DLocation = glGetAttribLocation(g_program_id, "LVertexPos2D");
+	if (gVertexPos2DLocation == -1)
+	{
+		SDL_Log("gVertexPos2DLocation\n");
+		return false;
+	}
+	//initialize clear color
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	if (glGetError() != GL_NO_ERROR)
+
+	//VBO data
+	GLfloat vertex_data[] = 
 	{
-		SDL_Log("glGetError()\n");
-		return false;
-	}
+		-1.0f, -1.0f,
+		1.0f, -1.0f,
+		-1.0f, 1.0f,
+		1.0f, 1.0f
+	};
+
+	//IBO data
+	GLuint index_data[] = { 0, 1, 2, 3 };
+	//create VBO
+	glGenBuffers(1, &gVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
+
+	//create IBO
+	glGenBuffers(1, &gIBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_data), index_data, GL_STATIC_DRAW);
 
 	return true;
 }
@@ -115,8 +183,9 @@ bool init(int w_width, int w_height)
 		return false;
 	}	
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	g_window = SDL_CreateWindow("anya", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w_width, w_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 
@@ -131,23 +200,25 @@ bool init(int w_width, int w_height)
 		SDL_Log("SDL_GL_CreateContext()\n");
 		return false;
 	} 
+	glewExperimental = GL_TRUE;
+	GLenum glewError = glewInit();
+	if (glewError != GLEW_OK)
+	{
+		SDL_Log("glewInit()\n");
+		return false;
+	}
 	//set vsync
 	SDL_GL_SetSwapInterval(1);
+
+	GameLogic::Config* config = new GameLogic::Config();
+	grid = new GameLogic::Grid(config);
+	delete config;
 	
 	if (!init_gl())
 	{
 		SDL_Log("init_gl()\n");
 		return false;
 	}
-
-	GameLogic::Config* config = new GameLogic::Config();
-	SDL_Log("config: %d, %d\n", config->width, config->height);
-	for (auto c : config->cells)
-	{
-		SDL_Log("cell: %d, %d\n", c.pos.x, c.pos.y);
-	}
-	grid = new GameLogic::Grid(config);
-	delete config;
 
 	return true;
 }

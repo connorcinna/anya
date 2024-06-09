@@ -3,6 +3,7 @@
 #include <string>
 #include <GL\GLU.h>
 #include "GameLogic.h"
+#include "SDL_log.h"
 
 using namespace GameLogic;
 
@@ -10,22 +11,17 @@ Grid::Grid(Config* config)
 {
 	this->width = config->width;
 	this->height = config->height;
-	this->cells = std::vector<std::vector<Cell>>();
-	//TODO: improve this - O(N^3) is nasty
-	for (int i = 0; i < config->width; i++)
+	this->cells = std::vector<std::vector<Cell>>(config->width, std::vector<Cell>(config->height));
+	for (int i = 0; i < this->width; i++)
 	{
-		this->cells.push_back(std::vector<Cell>());
-		for (int j = 0; j < config->height; ++j)
+		for (int j = 0; j < this->height; ++j)
 		{
-			this->cells[i].push_back(Cell({i, j}, false));
-			for (auto c : config->cells)
-			{
-				if (i == c.pos.x && j == c.pos.y)
-				{
-					this->cells[i][j].alive = true;
-				}
-			}
+			this->cells[i][j] = Cell({i, j}, false);
 		}
+	}
+	for (const auto &c : config->cells)
+	{
+		this->cells[c.pos.x][c.pos.y].alive = true;
 	}
 }
 
@@ -55,6 +51,7 @@ void Grid::render_grid()
 			this->cells[i][j].render_cell(this->width, this->height);
 		}
 	}
+	glFlush();
 }
 
 Cell::Cell()
@@ -75,7 +72,11 @@ Cell::~Cell()
 //draw a single cell
 void Cell::render_cell(int width, int height)
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//	if (this->alive)
+//	{
+//		SDL_Log("render_cell: alive ->  %d, %d\n", this->pos.x, this->pos.y);
+//	}
+//	glClear(GL_COLOR_BUFFER_BIT);
 	glBegin(GL_QUADS);
 	this->alive ? glColor3f(1.0f, 1.0f, 1.0f) : glColor3f(0.0f, 0.0f, 0.0f);
 	//TODO: this is probably not good practice
@@ -115,57 +116,57 @@ int Cell::nearby_cells(Grid* grid)
 {
 	int ret = 0;
 	// down left
-		if (this->pos.x - 1 >= 0 &&
-			this->pos.y - 1 >= 0 &&
-			grid->cells.at(this->pos.x - 1).at(this->pos.y - 1).alive) 
-		{
-			++ret;
-		}
-	// up left
-		if (this->pos.x - 1 >= 0 &&
-			this->pos.y + 1 < grid->height &&
-			grid->cells.at(this->pos.x - 1).at(this->pos.y + 1).alive)
-		{
-			++ret;
-		}
-		// up right
-		if (this->pos.x + 1 < grid->width &&
-			this->pos.y + 1 < grid->height &&
-			grid->cells.at(this->pos.x + 1).at(this->pos.y + 1).alive)
-		{
-			++ret;
-		}
-		// down right 
-		if (this->pos.x + 1 < grid->width &&
-			this->pos.y - 1 >= 0 &&
-			grid->cells.at(this->pos.x + 1).at(this->pos.y - 1).alive) 
-		{
-			++ret;
-		}
-		//down
-		if (this->pos.y - 1 >= 0 &&
-			grid->cells.at(this->pos.x).at(this->pos.y - 1).alive) 
-		{
-			++ret;
-		}
-		//up
-		if (this->pos.y + 1 < grid->height &&
-			grid->cells.at(this->pos.x).at(this->pos.y + 1).alive) 
-		{
-			++ret;
-		}
-		//left
-		if (this->pos.x - 1 >= 0 &&
-			grid->cells.at(this->pos.x - 1).at(this->pos.y).alive) 
-		{
-			++ret;
-		}
-		//right
-		if (this->pos.x + 1 < grid->width &&
-			grid->cells.at(this->pos.x + 1).at(this->pos.y).alive) 
-		{
-			++ret;
-		}
+	if (this->pos.x - 1 >= 0 &&
+		this->pos.y - 1 >= 0 &&
+		grid->cells.at(this->pos.x - 1).at(this->pos.y - 1).alive) 
+	{
+		++ret;
+	}
+// up left
+	if (this->pos.x - 1 >= 0 &&
+		this->pos.y + 1 < grid->height &&
+		grid->cells.at(this->pos.x - 1).at(this->pos.y + 1).alive)
+	{
+		++ret;
+	}
+	// up right
+	if (this->pos.x + 1 < grid->width &&
+		this->pos.y + 1 < grid->height &&
+		grid->cells.at(this->pos.x + 1).at(this->pos.y + 1).alive)
+	{
+		++ret;
+	}
+	// down right 
+	if (this->pos.x + 1 < grid->width &&
+		this->pos.y - 1 >= 0 &&
+		grid->cells.at(this->pos.x + 1).at(this->pos.y - 1).alive) 
+	{
+		++ret;
+	}
+	//down
+	if (this->pos.y - 1 >= 0 &&
+		grid->cells.at(this->pos.x).at(this->pos.y - 1).alive) 
+	{
+		++ret;
+	}
+	//up
+	if (this->pos.y + 1 < grid->height &&
+		grid->cells.at(this->pos.x).at(this->pos.y + 1).alive) 
+	{
+		++ret;
+	}
+	//left
+	if (this->pos.x - 1 >= 0 &&
+		grid->cells.at(this->pos.x - 1).at(this->pos.y).alive) 
+	{
+		++ret;
+	}
+	//right
+	if (this->pos.x + 1 < grid->width &&
+		grid->cells.at(this->pos.x + 1).at(this->pos.y).alive) 
+	{
+		++ret;
+	}
 	return ret;
 }
 

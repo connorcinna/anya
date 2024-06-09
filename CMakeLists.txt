@@ -5,13 +5,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(GLEW_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
-set(GLEW_LIBRARY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 add_compile_options(--target=i686-pc-windows-gnu -std=c++17 -g -Wall -Wextra -pedantic)
 
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
+
+#add_library(glew SHARED IMPORTED)
+#set_target_properties(glew PROPERTIES IMPORTED_LOCATION "C:/glew-2.2.0/lib/Release/Win32/glew32.lib")
 
 add_executable(anya 
 	${CMAKE_BINARY_DIR}/src/core.cpp
@@ -28,10 +29,10 @@ target_include_directories(anya
 	PUBLIC ${CMAKE_BINARY_DIR/include}
     PUBLIC ${SDL2_INCLUDE_DIRS}
     PUBLIC ${MinGW_INCLUDE_DIRS}
-	PUBLIC ${GLEW_INCLUDE_DIRS}
+	PUBLIC "C:/glew-2.2.0/include"
 )
 
 target_link_libraries(anya PUBLIC ${SDL2_LIBRARIES})
 target_link_libraries(anya PUBLIC ${GLEW_LIBRARIES})
 target_link_libraries(anya PUBLIC ${OPENGL_LIBRARIES})
-target_link_libraries(anya PUBLIC "C:/glew-2.2.0/lib/Release/Win32/glew32.lib")
+target_link_libraries(anya PRIVATE "C:/glew-2.2.0/lib/glew32.lib")

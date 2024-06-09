@@ -1,4 +1,3 @@
-#define MAP_SZ 100
 #include <stdlib.h>
 #include <vector>
 
