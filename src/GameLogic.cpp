@@ -72,19 +72,19 @@ Cell::~Cell()
 //draw a single cell
 void Cell::render_cell(int width, int height)
 {
-//	if (this->alive)
-//	{
-//		SDL_Log("render_cell: alive ->  %d, %d\n", this->pos.x, this->pos.y);
-//	}
-//	glClear(GL_COLOR_BUFFER_BIT);
-	glBegin(GL_QUADS);
+	if (this->alive)
+	{
+		SDL_Log("render_cell: alive ->  %d, %d\n", this->pos.x, this->pos.y);
+	}
+
+//	glBegin(GL_QUADS);
 	this->alive ? glColor3f(1.0f, 1.0f, 1.0f) : glColor3f(0.0f, 0.0f, 0.0f);
 	//TODO: this is probably not good practice
-	glVertex2f(-1.0f * (this->pos.x/(float)width), -1.0f * (this->pos.y/(float)height));
-	glVertex2f(-1.0f * (this->pos.x/(float)width), this->pos.y/(float)height);
-	glVertex2f(this->pos.x/(float)width, (-1.0f * this->pos.y/(float)height));
-	glVertex2f(this->pos.x/(float)width, this->pos.y/(float)height);
-	glEnd();
+//	glVertex2f(-1.0f * (this->pos.x/(float)width), -1.0f * (this->pos.y/(float)height));
+//	glVertex2f(-1.0f * (this->pos.x/(float)width), this->pos.y/(float)height);
+//	glVertex2f(this->pos.x/(float)width, (-1.0f * this->pos.y/(float)height));
+//	glVertex2f(this->pos.x/(float)width, this->pos.y/(float)height);
+//	glEnd();
 }
 
 //main loop logic

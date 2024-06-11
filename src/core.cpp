@@ -24,10 +24,15 @@ SDL_Window* g_window = nullptr;
 SDL_GLContext g_context;
 //the image to be loaded on the surface
 SDL_Surface* g_image = nullptr; 
-//some GL stuff
+//GLSL shader program
 GLuint g_program_id = 0;
+//vertex shader position
+//documentation says this should be GLuint, but the demo code shows it as GLint,
+//and can't initialize it to -1 as GLuint, so...
 GLint gVertexPos2DLocation = -1;
+//vertex buffer object
 GLuint gVBO = 0;
+//index buffer object
 GLuint gIBO = 0;
 //reference to the event processor
 EventProcessor* evp;
@@ -53,6 +58,20 @@ void signal_handler(int signum)
 	}
 }
 
+void sdl_close()
+{
+	SDL_Log("sdl_close()\n");
+	g_context = nullptr;
+	//Destroy window
+	SDL_DestroyWindow(g_window);
+	g_window = nullptr;
+
+	//Quit SDL subsystems
+	SDL_Quit();
+	delete evp;
+	exit(0);
+}
+
 void update()
 {
 	SDL_Event e;
@@ -72,30 +91,17 @@ void update()
 		glVertexAttribPointer(gVertexPos2DLocation, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), nullptr);
 		//set index data and render 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
-
+		glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, nullptr);
 		glDisableVertexAttribArray(gVertexPos2DLocation);
 
-		grid->update_grid();
-		grid->render_grid();
+//		grid->update_grid();
+//		grid->render_grid();
 		SDL_GL_SwapWindow(g_window);
 		//unbind shader program
 		glUseProgram(NULL);
-		SDL_Delay(1000);
+//		SDL_Delay(1000);
 	}
-}
-
-void sdl_close()
-{
-	SDL_Log("sdl_close()\n");
-	g_context = nullptr;
-	//Destroy window
-	SDL_DestroyWindow(g_window);
-	g_window = nullptr;
-
-	//Quit SDL subsystems
-	SDL_Quit();
-	delete evp;
-	exit(0);
+	sdl_close();
 }
 
 bool init_gl()
@@ -131,6 +137,7 @@ bool init_gl()
 		return false;
 	}
 	glAttachShader(g_program_id, fragment_shader);
+	//now both shaders are compiled and attached to the program, link it
 	glLinkProgram(g_program_id);
 	GLint program_linked = GL_FALSE;
 	glGetProgramiv(g_program_id, GL_LINK_STATUS, &program_linked);
@@ -152,10 +159,10 @@ bool init_gl()
 	//VBO data
 	GLfloat vertex_data[] = 
 	{
-		-1.0f, -1.0f,
-		1.0f, -1.0f,
-		-1.0f, 1.0f,
-		1.0f, 1.0f
+		-0.5f, -0.5f,
+		0.5f, -0.5f,
+		0.5f, 0.5f,
+		-0.5f, 0.5f
 	};
 
 	//IBO data
@@ -163,12 +170,12 @@ bool init_gl()
 	//create VBO
 	glGenBuffers(1, &gVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 2*4*sizeof(GLfloat), vertex_data, GL_STATIC_DRAW);
 
 	//create IBO
 	glGenBuffers(1, &gIBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index_data), index_data, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4*sizeof(GLuint), index_data, GL_STATIC_DRAW);
 
 	return true;
 }
