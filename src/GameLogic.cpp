@@ -1,7 +1,6 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <GL\GLU.h>
 #include "GameLogic.h"
 #include "SDL_log.h"
 
@@ -42,13 +41,13 @@ void Grid::update_grid()
 }
 
 //draw the grid in opengl -- call render_cell for each cell in the grid
-void Grid::render_grid()
+void Grid::render_grid(gl_context* ctx)
 {
 	for (int i = 0; i < this->width; ++i)
 	{
 		for (int j = 0; j < this->height; ++j)
 		{
-			this->cells[i][j].render_cell(this->width, this->height);
+			this->cells[i][j].render_cell(this->width, this->height, ctx);
 		}
 	}
 	glFlush();
@@ -70,21 +69,58 @@ Cell::~Cell()
 }
 
 //draw a single cell
-void Cell::render_cell(int width, int height)
+void Cell::render_cell(int width, int height, gl_context* ctx)
 {
 	if (this->alive)
 	{
 		SDL_Log("render_cell: alive ->  %d, %d\n", this->pos.x, this->pos.y);
 	}
+	//get vertex attribute location
+	ctx->gVertexPos2DLocation = glGetAttribLocation(ctx->dead_program_id, "LVertexPos2D");
+	if (ctx->gVertexPos2DLocation == -1)
+	{
+		SDL_Log("gVertexPos2DLocation\n");
+		return;
+//		return false;
+	}
+	//initialize clear color
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//TODO if the square is alive, unbind the default fragment shader program (dead) and 
+	//rebind with white fragment shader
+//	this->alive ? glColor3f(1.0f, 1.0f, 1.0f) : glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-//	glBegin(GL_QUADS);
-	this->alive ? glColor3f(1.0f, 1.0f, 1.0f) : glColor3f(0.0f, 0.0f, 0.0f);
-	//TODO: this is probably not good practice
-//	glVertex2f(-1.0f * (this->pos.x/(float)width), -1.0f * (this->pos.y/(float)height));
-//	glVertex2f(-1.0f * (this->pos.x/(float)width), this->pos.y/(float)height);
-//	glVertex2f(this->pos.x/(float)width, (-1.0f * this->pos.y/(float)height));
-//	glVertex2f(this->pos.x/(float)width, this->pos.y/(float)height);
-//	glEnd();
+	//VBO data
+	GLfloat vertex_data[] = 
+	{
+		-1.0f * (this->pos.x/(float)width), -1.0f * (this->pos.y/(float)height),
+		-1.0f * (this->pos.x/(float)width), this->pos.y/(float)height,
+		this->pos.x/(float)width, (-1.0f * this->pos.y/(float)height),
+		this->pos.x/(float)width, this->pos.y/(float)height,
+	};
+
+	//IBO data
+	GLuint index_data[] = { 0, 1, 2, 3 };
+	//create VBO
+	glGenBuffers(1, &ctx->gVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, ctx->gVBO);
+	glBufferData(GL_ARRAY_BUFFER, 2*4*sizeof(GLfloat), vertex_data, GL_STATIC_DRAW);
+
+	//create IBO
+	glGenBuffers(1, &ctx->gIBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->gIBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4*sizeof(GLuint), index_data, GL_STATIC_DRAW);
+
+	//bind program
+	this->alive ? glUseProgram(ctx->alive_program_id) : glUseProgram(ctx->dead_program_id);
+	//enable vertex position 
+	glEnableVertexAttribArray(ctx->gVertexPos2DLocation);
+	//set vertex data 
+	glBindBuffer(GL_ARRAY_BUFFER, ctx->gVBO);
+	glVertexAttribPointer(ctx->gVertexPos2DLocation, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), nullptr);
+	//set index data and render 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->gIBO);
+	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, nullptr);
+	glDisableVertexAttribArray(ctx->gVertexPos2DLocation);
 }
 
 //main loop logic

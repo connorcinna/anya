@@ -24,8 +24,10 @@ SDL_Window* g_window = nullptr;
 SDL_GLContext g_context;
 //the image to be loaded on the surface
 SDL_Surface* g_image = nullptr; 
-//GLSL shader program
-GLuint g_program_id = 0;
+//GLSL shader program for dead cells
+GLuint dead_program_id = 0;
+//GLSL shader program for alive cells
+GLuint alive_program_id = 0;
 //vertex shader position
 //documentation says this should be GLuint, but the demo code shows it as GLint,
 //and can't initialize it to -1 as GLuint, so...
@@ -81,32 +83,21 @@ void update()
 		{ 
 			evp->process_event(e);
 		}
-		glClear(GL_COLOR_BUFFER_BIT);
-		//bind program
-		glUseProgram(g_program_id);
-		//enable vertex position 
-		glEnableVertexAttribArray(gVertexPos2DLocation);
-		//set vertex data 
-		glBindBuffer(GL_ARRAY_BUFFER, gVBO);
-		glVertexAttribPointer(gVertexPos2DLocation, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), nullptr);
-		//set index data and render 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
-		glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, nullptr);
-		glDisableVertexAttribArray(gVertexPos2DLocation);
 
-//		grid->update_grid();
-//		grid->render_grid();
+		grid->update_grid();
+		GameLogic::gl_context ctx = {dead_program_id, alive_program_id, gVertexPos2DLocation, gVBO, gIBO};
+		grid->render_grid(&ctx);
 		SDL_GL_SwapWindow(g_window);
 		//unbind shader program
 		glUseProgram(NULL);
-//		SDL_Delay(1000);
+		SDL_Delay(1000);
 	}
 	sdl_close();
 }
 
 bool init_gl()
 {
-	g_program_id = glCreateProgram();
+	dead_program_id = glCreateProgram();
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER); 
 	const GLchar* vertex_shader_source[] =
 	{
@@ -121,62 +112,58 @@ bool init_gl()
 		SDL_Log("vertex_shader_compiled\n");
 		return false;
 	}
-	glAttachShader(g_program_id, vertex_shader);
-	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	const GLchar* fragment_shader_source[] =
+	glAttachShader(dead_program_id, vertex_shader);
+	glAttachShader(alive_program_id, vertex_shader);
+	GLuint dead_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint alive_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	const GLchar* dead_fragment_shader_source[] =
+	{
+		"#version 140\nout vec4 FragColor; void main() { FragColor = vec4( 0.0, 0.0, 0.0, 1.0 ); }"
+	};
+	const GLchar* alive_fragment_shader_source[] =
 	{
 		"#version 140\nout vec4 FragColor; void main() { FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ); }"
 	};
-	glShaderSource(fragment_shader, 1, fragment_shader_source, NULL);
-	glCompileShader(fragment_shader);
-	GLint fragment_shader_compiled = GL_FALSE;
-	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &fragment_shader_compiled);
-	if (fragment_shader_compiled != GL_TRUE)
+	//compile and link dead fragment shader
+	glShaderSource(dead_fragment_shader, 1, dead_fragment_shader_source, NULL);
+	glCompileShader(dead_fragment_shader);
+	GLint dead_fragment_shader_compiled = GL_FALSE;
+	glGetShaderiv(dead_fragment_shader, GL_COMPILE_STATUS, &dead_fragment_shader_compiled);
+	if (dead_fragment_shader_compiled != GL_TRUE)
 	{
 		SDL_Log("fragment_shader_compiled\n");
 		return false;
 	}
-	glAttachShader(g_program_id, fragment_shader);
+	glAttachShader(dead_program_id, dead_fragment_shader);
+
+	//comple and link alive fragment shader
+	glShaderSource(alive_fragment_shader, 1, alive_fragment_shader_source, NULL);
+	glCompileShader(alive_fragment_shader);
+	GLint alive_fragment_shader_compiled = GL_FALSE;
+	glGetShaderiv(alive_fragment_shader, GL_COMPILE_STATUS, &alive_fragment_shader_compiled);
+	if (alive_fragment_shader_compiled != GL_TRUE)
+	{
+		SDL_Log("fragment_shader_compiled\n");
+		return false;
+	}
 	//now both shaders are compiled and attached to the program, link it
-	glLinkProgram(g_program_id);
-	GLint program_linked = GL_FALSE;
-	glGetProgramiv(g_program_id, GL_LINK_STATUS, &program_linked);
-	if (program_linked != GL_TRUE)
+	glLinkProgram(dead_program_id);
+	glLinkProgram(alive_program_id);
+	GLint dead_program_linked = GL_FALSE;
+	GLint alive_program_linked = GL_FALSE;
+	glGetProgramiv(dead_program_id, GL_LINK_STATUS, &dead_program_linked);
+	if (dead_program_linked != GL_TRUE)
 	{
-		SDL_Log("program_linked\n");
+		SDL_Log("dead_program_linked\n");
 		return false;
 	}
-	//get vertex attribute location
-	gVertexPos2DLocation = glGetAttribLocation(g_program_id, "LVertexPos2D");
-	if (gVertexPos2DLocation == -1)
+	glGetProgramiv(alive_program_id, GL_LINK_STATUS, &alive_program_linked);
+	if (alive_program_linked != GL_TRUE)
 	{
-		SDL_Log("gVertexPos2DLocation\n");
+		SDL_Log("alive_program_linked\n");
 		return false;
 	}
-	//initialize clear color
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-	//VBO data
-	GLfloat vertex_data[] = 
-	{
-		-0.5f, -0.5f,
-		0.5f, -0.5f,
-		0.5f, 0.5f,
-		-0.5f, 0.5f
-	};
-
-	//IBO data
-	GLuint index_data[] = { 0, 1, 2, 3 };
-	//create VBO
-	glGenBuffers(1, &gVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
-	glBufferData(GL_ARRAY_BUFFER, 2*4*sizeof(GLfloat), vertex_data, GL_STATIC_DRAW);
-
-	//create IBO
-	glGenBuffers(1, &gIBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4*sizeof(GLuint), index_data, GL_STATIC_DRAW);
-
+	
 	return true;
 }
 
