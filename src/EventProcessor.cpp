@@ -1,13 +1,15 @@
 #include <type_traits>
 #include "EventProcessor.h"
-#include "SDL_events.h"
-#include "SDL.h"
+#include <SDL.h>
+//some of the event types are not defined for the SDL2 version I have
 
 EventProcessor::EventProcessor() : event_map 
 {
 	// generic SDL events
 	{SDL_QUIT, [this]() { process_quit(); }},
+#ifdef _WIN32
 	{SDL_DISPLAYEVENT, [this]() { process_display(); }},
+#endif
 	{SDL_WINDOWEVENT, [this]() { process_window(); }},
 	{SDL_SYSWMEVENT, [this]() {process_sys_wm(); }},
 	// keyboard events
@@ -29,17 +31,21 @@ EventProcessor::EventProcessor() : event_map
 	{SDL_JOYBUTTONUP, [this]() { process_joy_button_up(); }},
 	{SDL_JOYDEVICEADDED, [this]() { process_joy_device_added(); }},
 	{SDL_JOYDEVICEREMOVED, [this]() { process_joy_device_removed(); }},
+#ifdef _WIN32
 	{SDL_JOYBATTERYUPDATED, [this]() { process_joy_battery_updated(); }},
+#endif
 	// game controller events
 	{SDL_CONTROLLERAXISMOTION, [this]() { process_controller_axis_motion(); }},
 	{SDL_CONTROLLERBUTTONDOWN, [this]() { process_controller_button_down(); }},
 	{SDL_CONTROLLERBUTTONUP, [this]() { process_controller_button_up(); }},
 	{SDL_CONTROLLERDEVICEADDED, [this]() { process_controller_device_added(); }},
+#ifdef _WIN32
 	{SDL_CONTROLLERTOUCHPADDOWN, [this]() { process_controller_touchpad_down(); }},
 	{SDL_CONTROLLERTOUCHPADMOTION, [this]() { process_controller_touchpad_motion(); }},
 	{SDL_CONTROLLERTOUCHPADUP, [this]() { process_controller_touchpad_up(); }},
 	{SDL_CONTROLLERSENSORUPDATE, [this]() { process_controller_sensor_update(); }},
 	{SDL_CONTROLLERSTEAMHANDLEUPDATED, [this]() { process_controller_steam_handle_updated(); }},
+#endif
 	// touch events
 	{SDL_FINGERDOWN, [this]() { process_finger_down(); }},
 	{SDL_FINGERUP, [this]() { process_finger_up(); }},
@@ -59,7 +65,9 @@ EventProcessor::EventProcessor() : event_map
 	{SDL_AUDIODEVICEADDED, [this]() { process_audio_device_added(); }},
 	{SDL_AUDIODEVICEREMOVED, [this]() { process_audio_device_removed(); }},
 	// sensor events
+#ifdef _WIN32
 	{SDL_SENSORUPDATE, [this]() { process_sensor_update(); }},
+#endif
 	// render events
 	{SDL_RENDER_TARGETS_RESET, [this]() { process_render_targets_reset(); }},
 	{SDL_RENDER_DEVICE_RESET, [this]() { process_render_device_reset(); }},

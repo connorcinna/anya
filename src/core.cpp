@@ -8,8 +8,14 @@
 #include <csignal>
 #include <chrono>
 #include <thread>
+#ifdef __linux__
+#include <GL/glew.h>
+#include <GL/glu.h>
+#endif
+#ifdef _WIN32
 #include <GL\glew.h>
 #include <GL\glu.h>
+#endif
 #include <SDL.h>
 #include <SDL_events.h>
 #include <SDL_opengl.h>

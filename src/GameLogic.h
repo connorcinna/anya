@@ -1,7 +1,13 @@
 #include <stdlib.h>
 #include <vector>
+#ifdef __linux__
+#include <GL/glew.h>
+#include <GL/glu.h>
+#endif
+#ifdef _WIN32
 #include <GL\glew.h>
 #include <GL\glu.h>
+#endif
 
 namespace GameLogic
 {
