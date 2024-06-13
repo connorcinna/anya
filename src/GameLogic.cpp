@@ -41,13 +41,13 @@ void Grid::update_grid()
 }
 
 //draw the grid in opengl -- call render_cell for each cell in the grid
-void Grid::render_grid(gl_context* ctx)
+void Grid::render_grid(GLuint dead_program_id, GLuint alive_program_id)
 {
 	for (int i = 0; i < this->width; ++i)
 	{
 		for (int j = 0; j < this->height; ++j)
 		{
-			this->cells[i][j].render_cell(this->width, this->height, ctx);
+			this->cells[i][j].render_cell(this->width, this->height, dead_program_id, alive_program_id);
 		}
 	}
 	glFlush();
@@ -69,58 +69,65 @@ Cell::~Cell()
 }
 
 //draw a single cell
-void Cell::render_cell(int width, int height, gl_context* ctx)
+void Cell::render_cell(int width, int height, GLuint dead_program_id, GLuint alive_program_id)
 {
-	if (this->alive)
-	{
-		SDL_Log("render_cell: alive ->  %d, %d\n", this->pos.x, this->pos.y);
-	}
+
 	//get vertex attribute location
-	ctx->gVertexPos2DLocation = glGetAttribLocation(ctx->dead_program_id, "LVertexPos2D");
-	if (ctx->gVertexPos2DLocation == -1)
+	float cell_width = 2.0f / width;
+	float cell_height = 2.0f / height;
+	GLint gVertexPos2DLocation = -1;
+	this->alive ? gVertexPos2DLocation = glGetAttribLocation(alive_program_id, "LVertexPos2D") :
+	             gVertexPos2DLocation = glGetAttribLocation(dead_program_id, "LVertexPos2D");
+	if (gVertexPos2DLocation == -1)
 	{
 		SDL_Log("gVertexPos2DLocation\n");
 		return;
-//		return false;
 	}
-	//initialize clear color
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	//TODO if the square is alive, unbind the default fragment shader program (dead) and 
-	//rebind with white fragment shader
-//	this->alive ? glColor3f(1.0f, 1.0f, 1.0f) : glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
+	GLuint gVBO = 0;
+	GLuint gIBO = 0;
 	//VBO data
+	//after printing this out, im like 99% sure this is correct, but still nothing shows up
 	GLfloat vertex_data[] = 
 	{
-		-1.0f * (this->pos.x/(float)width), -1.0f * (this->pos.y/(float)height),
-		-1.0f * (this->pos.x/(float)width), this->pos.y/(float)height,
-		this->pos.x/(float)width, (-1.0f * this->pos.y/(float)height),
-		this->pos.x/(float)width, this->pos.y/(float)height,
+		(-1.0f + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)),
+		((-1.0f + cell_width) + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)),
+		(-1.0f + (this->pos.x*cell_width)), ((-1.0f + cell_height) + (this->pos.y*cell_height)),
+		(-1.0f + cell_width) + (this->pos.x*cell_width), ((-1.0f + cell_height) + (this->pos.y*cell_height)),
 	};
+	if ((this->pos.x <= 1 && this->pos.y <= 1) || 
+		(this->pos.x >= width - 2 && this->pos.y >= height - 2))
+	{
+		SDL_Log("vertex_data for cell (%d, %d)\n", this->pos.x, this->pos.y);
+		for (auto &v : vertex_data)
+		{
+			SDL_Log("vertex_data: %f\n", v);
+		}
+	}
 
 	//IBO data
 	GLuint index_data[] = { 0, 1, 2, 3 };
 	//create VBO
-	glGenBuffers(1, &ctx->gVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, ctx->gVBO);
+	glGenBuffers(1, &gVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
 	glBufferData(GL_ARRAY_BUFFER, 2*4*sizeof(GLfloat), vertex_data, GL_STATIC_DRAW);
 
 	//create IBO
-	glGenBuffers(1, &ctx->gIBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->gIBO);
+	glGenBuffers(1, &gIBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4*sizeof(GLuint), index_data, GL_STATIC_DRAW);
 
 	//bind program
-	this->alive ? glUseProgram(ctx->alive_program_id) : glUseProgram(ctx->dead_program_id);
+	this->alive ? glUseProgram(alive_program_id) : glUseProgram(dead_program_id);
 	//enable vertex position 
-	glEnableVertexAttribArray(ctx->gVertexPos2DLocation);
+	glEnableVertexAttribArray(gVertexPos2DLocation);
 	//set vertex data 
-	glBindBuffer(GL_ARRAY_BUFFER, ctx->gVBO);
-	glVertexAttribPointer(ctx->gVertexPos2DLocation, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), nullptr);
+	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
+	glVertexAttribPointer(gVertexPos2DLocation, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), nullptr);
 	//set index data and render 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->gIBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
 	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, nullptr);
-	glDisableVertexAttribArray(ctx->gVertexPos2DLocation);
+	glDisableVertexAttribArray(gVertexPos2DLocation);
+	glUseProgram(NULL);
 }
 
 //main loop logic

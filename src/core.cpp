@@ -31,7 +31,6 @@ GLuint alive_program_id = 0;
 //vertex shader position
 //documentation says this should be GLuint, but the demo code shows it as GLint,
 //and can't initialize it to -1 as GLuint, so...
-GLint gVertexPos2DLocation = -1;
 //vertex buffer object
 GLuint gVBO = 0;
 //index buffer object
@@ -85,8 +84,8 @@ void update()
 		}
 
 		grid->update_grid();
-		GameLogic::gl_context ctx = {dead_program_id, alive_program_id, gVertexPos2DLocation, gVBO, gIBO};
-		grid->render_grid(&ctx);
+//		GameLogic::gl_context ctx = {dead_program_id, alive_program_id, gVertexPos2DLocation, gVBO, gIBO};
+		grid->render_grid(dead_program_id, alive_program_id);
 		SDL_GL_SwapWindow(g_window);
 		//unbind shader program
 		glUseProgram(NULL);
@@ -98,6 +97,7 @@ void update()
 bool init_gl()
 {
 	dead_program_id = glCreateProgram();
+	alive_program_id = glCreateProgram();
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER); 
 	const GLchar* vertex_shader_source[] =
 	{

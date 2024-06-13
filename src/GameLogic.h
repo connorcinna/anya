@@ -15,15 +15,6 @@ namespace GameLogic
 		int y;
 	} Pos;
 
-	typedef struct
-	{
-		GLuint dead_program_id;
-		GLuint alive_program_id;
-		GLint gVertexPos2DLocation;
-		GLuint gVBO;
-		GLuint gIBO;
-	} gl_context;
-
 	class Cell
 	{
 		public:
@@ -33,7 +24,7 @@ namespace GameLogic
 			int nearby_cells(Grid* grid);
 			void update_cell(Grid* grid);
 			//TODO: put this into a render class!
-			void render_cell(int width, int height, gl_context* ctx);
+			void render_cell(int width, int height, GLuint dead_program_id, GLuint alive_program_id);
 			Pos pos;
 			bool alive;
 	};
@@ -53,7 +44,7 @@ namespace GameLogic
 			virtual ~Grid();
 	     	void update_grid();
 			//TODO: put this into a render class!
-			void render_grid(gl_context* ctx);
+			void render_grid(GLuint dead_program_id, GLuint alive_program_id);
 			int width;
 			int height;
 			std::vector<std::vector<Cell>> cells;
