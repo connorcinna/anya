@@ -100,8 +100,9 @@ void update()
 	sdl_close();
 }
 
-bool init_gl()
+bool init_gl(int w_width, int w_height)
 {
+	glViewport(0, 0, w_width, w_height);
 	dead_program_id = glCreateProgram();
 	alive_program_id = glCreateProgram();
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER); 
@@ -214,7 +215,7 @@ bool init(int w_width, int w_height)
 	grid = new GameLogic::Grid(config);
 	delete config;
 	
-	if (!init_gl())
+	if (!init_gl(w_width, w_height))
 	{
 		SDL_Log("init_gl()\n");
 		return false;

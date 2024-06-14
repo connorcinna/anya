@@ -71,7 +71,10 @@ Cell::~Cell()
 //draw a single cell
 void Cell::render_cell(int width, int height, GLuint dead_program_id, GLuint alive_program_id)
 {
-
+	GLint m_viewport[4];
+	glGetIntegerv(GL_VIEWPORT, m_viewport);
+	GLint m_width = m_viewport[2];
+	GLint m_height = m_viewport[3];
 	//get vertex attribute location
 	float cell_width = 2.0f / width;
 	float cell_height = 2.0f / height;
@@ -89,10 +92,11 @@ void Cell::render_cell(int width, int height, GLuint dead_program_id, GLuint ali
 	//after printing this out, im like 99% sure this is correct, but still nothing shows up
 	GLfloat vertex_data[] = 
 	{
-		(-1.0f + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)),
-		((-1.0f + cell_width) + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)),
-		(-1.0f + (this->pos.x*cell_width)), ((-1.0f + cell_height) + (this->pos.y*cell_height)),
-		(-1.0f + cell_width) + (this->pos.x*cell_width), ((-1.0f + cell_height) + (this->pos.y*cell_height)),
+
+//		(-1.0f + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)),
+//		((-1.0f + cell_width) + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)),
+//		(-1.0f + (this->pos.x*cell_width)), ((-1.0f + cell_height) + (this->pos.y*cell_height)),
+//		(-1.0f + cell_width) + (this->pos.x*cell_width), ((-1.0f + cell_height) + (this->pos.y*cell_height)),
 	};
 	if ((this->pos.x <= 1 && this->pos.y <= 1) || 
 		(this->pos.x >= width - 2 && this->pos.y >= height - 2))
