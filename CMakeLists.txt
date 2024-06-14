@@ -25,6 +25,8 @@ add_executable(anya
 	${CMAKE_BINARY_DIR}/src/EventProcessor.h
 	${CMAKE_BINARY_DIR}/src/GameLogic.h
 	${CMAKE_BINARY_DIR}/src/GameLogic.cpp
+	${CMAKE_BINARY_DIR}/src/Renderer.h
+	${CMAKE_BINARY_DIR}/src/Renderer.cpp
 )
 
 

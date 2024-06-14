@@ -3,6 +3,7 @@
 #include <string>
 #include "GameLogic.h"
 #include "SDL_log.h"
+#include "Renderer.h"
 
 using namespace GameLogic;
 
@@ -43,6 +44,8 @@ void Grid::update_grid()
 //draw the grid in opengl -- call render_cell for each cell in the grid
 void Grid::render_grid(GLuint dead_program_id, GLuint alive_program_id)
 {
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 	for (int i = 0; i < this->width; ++i)
 	{
 		for (int j = 0; j < this->height; ++j)
@@ -71,67 +74,29 @@ Cell::~Cell()
 //draw a single cell
 void Cell::render_cell(int width, int height, GLuint dead_program_id, GLuint alive_program_id)
 {
-	GLint m_viewport[4];
-	glGetIntegerv(GL_VIEWPORT, m_viewport);
-	GLint m_width = m_viewport[2];
-	GLint m_height = m_viewport[3];
-	//get vertex attribute location
-	float cell_width = 2.0f / width;
-	float cell_height = 2.0f / height;
-	GLint gVertexPos2DLocation = -1;
-	this->alive ? gVertexPos2DLocation = glGetAttribLocation(alive_program_id, "LVertexPos2D") :
-	             gVertexPos2DLocation = glGetAttribLocation(dead_program_id, "LVertexPos2D");
-	if (gVertexPos2DLocation == -1)
-	{
-		SDL_Log("gVertexPos2DLocation\n");
-		return;
-	}
-	GLuint gVBO = 0;
-	GLuint gIBO = 0;
-	//VBO data
+//	//get vertex attribute location
+//	GLfloat cell_width = 2.0f / width;
+//	GLfloat cell_height = 2.0f / height;
 	//after printing this out, im like 99% sure this is correct, but still nothing shows up
+//	GLfloat vertex_data[] = 
+//	{
+//		(-1.0f + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)), 0.0f,
+//		((-1.0f + cell_width) + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)), 0.0f,
+//		(-1.0f + (this->pos.x*cell_width)), ((-1.0f + cell_height) + (this->pos.y*cell_height)), 0.0f,
+//		(-1.0f + cell_width) + (this->pos.x*cell_width), ((-1.0f + cell_height) + (this->pos.y*cell_height)), 0.0f
+//	};
+
 	GLfloat vertex_data[] = 
 	{
-
-//		(-1.0f + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)),
-//		((-1.0f + cell_width) + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)),
-//		(-1.0f + (this->pos.x*cell_width)), ((-1.0f + cell_height) + (this->pos.y*cell_height)),
-//		(-1.0f + cell_width) + (this->pos.x*cell_width), ((-1.0f + cell_height) + (this->pos.y*cell_height)),
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		-0.5f, 0.5f, 0.0f,
+		0.5f, 0.5f, 0.0f
 	};
-	if ((this->pos.x <= 1 && this->pos.y <= 1) || 
-		(this->pos.x >= width - 2 && this->pos.y >= height - 2))
-	{
-		SDL_Log("vertex_data for cell (%d, %d)\n", this->pos.x, this->pos.y);
-		for (auto &v : vertex_data)
-		{
-			SDL_Log("vertex_data: %f\n", v);
-		}
-	}
-
-	//IBO data
-	GLuint index_data[] = { 0, 1, 2, 3 };
-	//create VBO
-	glGenBuffers(1, &gVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
-	glBufferData(GL_ARRAY_BUFFER, 2*4*sizeof(GLfloat), vertex_data, GL_STATIC_DRAW);
-
-	//create IBO
-	glGenBuffers(1, &gIBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 4*sizeof(GLuint), index_data, GL_STATIC_DRAW);
-
-	//bind program
-	this->alive ? glUseProgram(alive_program_id) : glUseProgram(dead_program_id);
-	//enable vertex position 
-	glEnableVertexAttribArray(gVertexPos2DLocation);
-	//set vertex data 
-	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
-	glVertexAttribPointer(gVertexPos2DLocation, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GLfloat), nullptr);
-	//set index data and render 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIBO);
-	glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, nullptr);
-	glDisableVertexAttribArray(gVertexPos2DLocation);
-	glUseProgram(NULL);
+	std::vector<GLuint> program_ids;
+	program_ids.push_back(dead_program_id);
+	program_ids.push_back(alive_program_id);
+	Renderer::render(vertex_data, program_ids);
 }
 
 //main loop logic

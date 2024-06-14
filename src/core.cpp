@@ -23,6 +23,7 @@
 #include <SDL_stdinc.h>
 #include "EventProcessor.h"
 #include "GameLogic.h"
+#include "Renderer.h"
 
 //the window we're rendering
 SDL_Window* g_window = nullptr;
@@ -45,6 +46,8 @@ GLuint gIBO = 0;
 EventProcessor* evp;
 //reference to game grid
 GameLogic::Grid* grid;
+//reference to renderer
+Renderer* renderer;
 
 
 void usage() 
@@ -90,11 +93,8 @@ void update()
 		}
 
 		grid->update_grid();
-//		GameLogic::gl_context ctx = {dead_program_id, alive_program_id, gVertexPos2DLocation, gVBO, gIBO};
 		grid->render_grid(dead_program_id, alive_program_id);
 		SDL_GL_SwapWindow(g_window);
-		//unbind shader program
-		glUseProgram(NULL);
 		SDL_Delay(1000);
 	}
 	sdl_close();
@@ -106,11 +106,16 @@ bool init_gl(int w_width, int w_height)
 	dead_program_id = glCreateProgram();
 	alive_program_id = glCreateProgram();
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER); 
-	const GLchar* vertex_shader_source[] =
-	{
-		"#version 140\nin vec2 LVertexPos2D; void main() { gl_Position = vec4( LVertexPos2D.x, LVertexPos2D.y, 0, 1 ); }"
-	};
-	glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
+    const char* vertex_shader_source = 
+	R"(
+		#version 330 core
+		layout (location = 0) in vec3 aPos;
+		void main()
+		{
+			gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+		}
+	)";
+	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
 	glCompileShader(vertex_shader);
 	GLint vertex_shader_compiled = GL_FALSE;
 	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &vertex_shader_compiled);
@@ -123,16 +128,26 @@ bool init_gl(int w_width, int w_height)
 	glAttachShader(alive_program_id, vertex_shader);
 	GLuint dead_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	GLuint alive_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	const GLchar* dead_fragment_shader_source[] =
-	{
-		"#version 140\nout vec4 FragColor; void main() { FragColor = vec4( 0.0, 0.0, 0.0, 1.0 ); }"
-	};
-	const GLchar* alive_fragment_shader_source[] =
-	{
-		"#version 140\nout vec4 FragColor; void main() { FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ); }"
-	};
+	const char* dead_fragment_shader_source = 
+	R"(
+		#version 330 core
+		out vec4 FragColor;
+		void main()
+		{
+			FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
+		}
+	)";
+	const char* alive_fragment_shader_source = 
+	R"(
+		#version 330 core
+		out vec4 FragColor;
+		void main()
+		{
+			FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
+		}
+	)";
 	//compile and link dead fragment shader
-	glShaderSource(dead_fragment_shader, 1, dead_fragment_shader_source, NULL);
+	glShaderSource(dead_fragment_shader, 1, &dead_fragment_shader_source, NULL);
 	glCompileShader(dead_fragment_shader);
 	GLint dead_fragment_shader_compiled = GL_FALSE;
 	glGetShaderiv(dead_fragment_shader, GL_COMPILE_STATUS, &dead_fragment_shader_compiled);
@@ -144,7 +159,7 @@ bool init_gl(int w_width, int w_height)
 	glAttachShader(dead_program_id, dead_fragment_shader);
 
 	//comple and link alive fragment shader
-	glShaderSource(alive_fragment_shader, 1, alive_fragment_shader_source, NULL);
+	glShaderSource(alive_fragment_shader, 1, &alive_fragment_shader_source, NULL);
 	glCompileShader(alive_fragment_shader);
 	GLint alive_fragment_shader_compiled = GL_FALSE;
 	glGetShaderiv(alive_fragment_shader, GL_COMPILE_STATUS, &alive_fragment_shader_compiled);
@@ -170,7 +185,10 @@ bool init_gl(int w_width, int w_height)
 		SDL_Log("alive_program_linked\n");
 		return false;
 	}
-	
+	glDeleteShader(dead_fragment_shader);
+	glDeleteShader(alive_fragment_shader);
+	glDeleteShader(vertex_shader);
+
 	return true;
 }
 
@@ -185,7 +203,7 @@ bool init(int w_width, int w_height)
 	}	
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	g_window = SDL_CreateWindow("anya", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w_width, w_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
@@ -210,9 +228,10 @@ bool init(int w_width, int w_height)
 	}
 	//set vsync
 	SDL_GL_SetSwapInterval(1);
-
+	renderer = new Renderer();
 	GameLogic::Config* config = new GameLogic::Config();
 	grid = new GameLogic::Grid(config);
+	grid->renderer = renderer;
 	delete config;
 	
 	if (!init_gl(w_width, w_height))

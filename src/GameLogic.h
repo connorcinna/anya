@@ -8,6 +8,7 @@
 #include <GL\glew.h>
 #include <GL\glu.h>
 #endif
+#include "Renderer.h"
 
 namespace GameLogic
 {
@@ -54,6 +55,7 @@ namespace GameLogic
 			int width;
 			int height;
 			std::vector<std::vector<Cell>> cells;
+			Renderer* renderer;
 	};
 }
 
