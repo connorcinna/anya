@@ -20,8 +20,10 @@ class Renderer
 		//destroy GL objects
 		~Renderer();
 		//per frame render method
-		static void render(GLfloat vertex_data[], std::vector<GLuint> program_ids);
+		static void render(std::vector<GLfloat> vertex_data, std::vector<GLuint> program_ids);
 		//check for openGL errors
 		static bool check_gl_error(const char* file, const char* function, int line);
+		std::vector<std::vector<GLuint>> v_VBO;
+		std::vector<std::vector<GLuint>> v_VAO;
 };
 #endif

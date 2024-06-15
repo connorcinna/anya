@@ -48,7 +48,34 @@ EventProcessor* evp;
 GameLogic::Grid* grid;
 //reference to renderer
 Renderer* renderer;
+const char* vertex_shader_source = 
+R"(
+	#version 330 core
+	layout (location = 0) in vec3 aPos;
 
+	void main()
+	{
+		gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+	}
+)";
+const char* dead_fragment_shader_source = 
+R"(
+	#version 330 core
+	out vec4 FragColor;
+	void main()
+	{
+		FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
+	}
+)";
+const char* alive_fragment_shader_source = 
+R"(
+	#version 330 core
+	out vec4 FragColor;
+	void main()
+	{
+		FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
+	}
+)";
 
 void usage() 
 {
@@ -100,21 +127,13 @@ void update()
 	sdl_close();
 }
 
-bool init_gl(int w_width, int w_height)
+bool init_gl(int w_width, int w_height, Grid* grid)
 {
 	glViewport(0, 0, w_width, w_height);
 	dead_program_id = glCreateProgram();
 	alive_program_id = glCreateProgram();
+
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER); 
-    const char* vertex_shader_source = 
-	R"(
-		#version 330 core
-		layout (location = 0) in vec3 aPos;
-		void main()
-		{
-			gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-		}
-	)";
 	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
 	glCompileShader(vertex_shader);
 	GLint vertex_shader_compiled = GL_FALSE;
@@ -126,26 +145,10 @@ bool init_gl(int w_width, int w_height)
 	}
 	glAttachShader(dead_program_id, vertex_shader);
 	glAttachShader(alive_program_id, vertex_shader);
+
 	GLuint dead_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	GLuint alive_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	const char* dead_fragment_shader_source = 
-	R"(
-		#version 330 core
-		out vec4 FragColor;
-		void main()
-		{
-			FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
-		}
-	)";
-	const char* alive_fragment_shader_source = 
-	R"(
-		#version 330 core
-		out vec4 FragColor;
-		void main()
-		{
-			FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
-		}
-	)";
+
 	//compile and link dead fragment shader
 	glShaderSource(dead_fragment_shader, 1, &dead_fragment_shader_source, NULL);
 	glCompileShader(dead_fragment_shader);
@@ -234,7 +237,7 @@ bool init(int w_width, int w_height)
 	grid->renderer = renderer;
 	delete config;
 	
-	if (!init_gl(w_width, w_height))
+	if (!init_gl(w_width, w_height, grid))
 	{
 		SDL_Log("init_gl()\n");
 		return false;

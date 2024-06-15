@@ -86,16 +86,17 @@ void Cell::render_cell(int width, int height, GLuint dead_program_id, GLuint ali
 //		(-1.0f + cell_width) + (this->pos.x*cell_width), ((-1.0f + cell_height) + (this->pos.y*cell_height)), 0.0f
 //	};
 
-	GLfloat vertex_data[] = 
+	std::vector<GLfloat> vertex_data = 
 	{
 		-0.5f, -0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f,
-		0.5f, 0.5f, 0.0f
+		0.0f, 0.5f, 0.0f
 	};
-	std::vector<GLuint> program_ids;
-	program_ids.push_back(dead_program_id);
-	program_ids.push_back(alive_program_id);
+	std::vector<GLuint> program_ids = 
+	{
+		dead_program_id,
+		alive_program_id
+	};
 	Renderer::render(vertex_data, program_ids);
 }
 

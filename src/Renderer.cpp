@@ -1,4 +1,3 @@
-#include <string>
 #include <sstream>
 #include "Renderer.h"
 
@@ -10,7 +9,9 @@ Renderer::~Renderer()
 {
 }
 
-void Renderer::render(GLfloat vertex_data[], std::vector<GLuint> program_ids)
+//TODO:change this in the future, copying over the whole vector for every cell every time
+//seems really inefficient
+void Renderer::render(std::vector<GLfloat> vertex_data, std::vector<GLuint> program_ids)
 {
 	//get vertex attribute location
 	GLuint gVBO = 0;
@@ -26,11 +27,11 @@ void Renderer::render(GLfloat vertex_data[], std::vector<GLuint> program_ids)
 
 	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
 	CHECK_GL_ERR();
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertex_data.size(), vertex_data.data(), GL_STATIC_DRAW);
 	CHECK_GL_ERR();
 
 	//set vertex data 
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), (void*)0);
 	CHECK_GL_ERR();
 	//enable vertex position 
 	glEnableVertexAttribArray(0);
@@ -48,7 +49,7 @@ void Renderer::render(GLfloat vertex_data[], std::vector<GLuint> program_ids)
 	glBindVertexArray(gVAO);
 	CHECK_GL_ERR();
 	//draw
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 	CHECK_GL_ERR();
 
 	glDisableVertexAttribArray(0);

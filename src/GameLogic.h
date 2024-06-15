@@ -34,6 +34,8 @@ namespace GameLogic
 			void render_cell(int width, int height, GLuint dead_program_id, GLuint alive_program_id);
 			Pos pos;
 			bool alive;
+			GLuint VBO;
+			GLuint VAO;
 	};
 	class Config
 	{
