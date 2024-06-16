@@ -188,6 +188,25 @@ bool init_gl(int w_width, int w_height, Grid* grid)
 		SDL_Log("alive_program_linked\n");
 		return false;
 	}
+	//initialize vertex array objects for each cell
+	std::vector<std::vector<GLuint>> v_VBO;
+	std::vector<std::vector<GLuint>> v_VAO;
+	for (size_t i = 0; i < v_VAO.size(); ++i)
+	{
+		for (size_t j = 0; j < v_VAO[i].size(); ++j)
+		{
+			//TODO under construction
+			glGenVertexArrays(1, &v_VAO[i][j]);
+			CHECK_GL_ERR();
+			//create VBO
+			glGenBuffers(1, &v_VBO[i][j]);
+			CHECK_GL_ERR();
+			glBindVertexArray(v_VAO[i][j]);
+			CHECK_GL_ERR();
+
+			glBindBuffer(GL_ARRAY_BUFFER, gVBO);
+		}
+	}
 	glDeleteShader(dead_fragment_shader);
 	glDeleteShader(alive_fragment_shader);
 	glDeleteShader(vertex_shader);
