@@ -38,14 +38,10 @@ GLuint alive_program_id = 0;
 //vertex shader position
 //documentation says this should be GLuint, but the demo code shows it as GLint,
 //and can't initialize it to -1 as GLuint, so...
-//vertex buffer object
-GLuint gVBO = 0;
-//index buffer object
-GLuint gIBO = 0;
 //reference to the event processor
 EventProcessor* evp;
 //reference to game grid
-GameLogic::Grid* grid;
+Grid* grid;
 //reference to renderer
 Renderer* renderer;
 const char* vertex_shader_source = 
@@ -189,24 +185,30 @@ bool init_gl(int w_width, int w_height, Grid* grid)
 		return false;
 	}
 	//initialize vertex array objects for each cell
-	std::vector<std::vector<GLuint>> v_VBO;
-	std::vector<std::vector<GLuint>> v_VAO;
-	for (size_t i = 0; i < v_VAO.size(); ++i)
+	std::vector<std::vector<GLuint>> VBOs(grid->width, std::vector<GLuint>(grid->height));
+	std::vector<std::vector<GLuint>> VAOs(grid->width, std::vector<GLuint>(grid->height));
+	for (size_t i = 0; i < VAOs.size(); ++i)
 	{
-		for (size_t j = 0; j < v_VAO[i].size(); ++j)
+		for (size_t j = 0; j < VAOs[i].size(); ++j)
 		{
-			//TODO under construction
-			glGenVertexArrays(1, &v_VAO[i][j]);
+			//create VAO
+			glGenVertexArrays(1, &VAOs[i][j]);
 			CHECK_GL_ERR();
 			//create VBO
-			glGenBuffers(1, &v_VBO[i][j]);
+			glGenBuffers(1, &VBOs[i][j]);
 			CHECK_GL_ERR();
-			glBindVertexArray(v_VAO[i][j]);
+			//bind the VAO to the GL_ARRAY_BUFFER
+			glBindVertexArray(VAOs[i][j]);
 			CHECK_GL_ERR();
-
-			glBindBuffer(GL_ARRAY_BUFFER, gVBO);
+			//bind the VBO to the VAO
+			glBindBuffer(GL_ARRAY_BUFFER, VBOs[i][j]);
+			CHECK_GL_ERR();
 		}
 	}
+	//set the grid object's VBOs and VAOs
+	grid->VBOs = VBOs;
+	grid->VAOs = VAOs;
+	grid->init_cells();
 	glDeleteShader(dead_fragment_shader);
 	glDeleteShader(alive_fragment_shader);
 	glDeleteShader(vertex_shader);
@@ -251,8 +253,8 @@ bool init(int w_width, int w_height)
 	//set vsync
 	SDL_GL_SetSwapInterval(1);
 	renderer = new Renderer();
-	GameLogic::Config* config = new GameLogic::Config();
-	grid = new GameLogic::Grid(config);
+	Config* config = new Config();
+	grid = new Grid(config);
 	grid->renderer = renderer;
 	delete config;
 	

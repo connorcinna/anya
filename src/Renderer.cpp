@@ -11,45 +11,15 @@ Renderer::~Renderer()
 
 //TODO:change this in the future, copying over the whole vector for every cell every time
 //seems really inefficient
-void Renderer::render(std::vector<GLfloat> vertex_data, std::vector<GLuint> program_ids)
+void Renderer::render(std::vector<GLuint> program_ids, GLuint VAO, bool alive)
 {
-	//get vertex attribute location
-	GLuint gVBO = 0;
-	GLuint gVAO = 0;
-	//create VAO
-	glGenVertexArrays(1, &gVAO);
-	CHECK_GL_ERR();
-	//create VBO
-	glGenBuffers(1, &gVBO);
-	CHECK_GL_ERR();
-	glBindVertexArray(gVAO);
-	CHECK_GL_ERR();
-
-	glBindBuffer(GL_ARRAY_BUFFER, gVBO);
-	CHECK_GL_ERR();
-	glBufferData(GL_ARRAY_BUFFER, vertex_data.size(), vertex_data.data(), GL_STATIC_DRAW);
-	CHECK_GL_ERR();
-
-	//set vertex data 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), (void*)0);
-	CHECK_GL_ERR();
-	//enable vertex position 
-	glEnableVertexAttribArray(0);
-	CHECK_GL_ERR();
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	CHECK_GL_ERR();
-	glBindVertexArray(0);
-	CHECK_GL_ERR();
 	//bind program
-//	this->alive ? glUseProgram(alive_program_id) : glUseProgram(dead_program_id);
-//    int dead_program_id = program_ids[0];
-	int alive_program_id = program_ids[1];
-	glUseProgram(alive_program_id);
+	alive ? glUseProgram(program_ids[1]) : glUseProgram(program_ids[0]);
 	CHECK_GL_ERR();
-	glBindVertexArray(gVAO);
+	glBindVertexArray(VAO);
 	CHECK_GL_ERR();
 	//draw
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	CHECK_GL_ERR();
 
 	glDisableVertexAttribArray(0);

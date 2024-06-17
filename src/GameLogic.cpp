@@ -5,8 +5,6 @@
 #include "SDL_log.h"
 #include "Renderer.h"
 
-using namespace GameLogic;
-
 Grid::Grid(Config* config)
 {
 	this->width = config->width;
@@ -27,6 +25,40 @@ Grid::Grid(Config* config)
 
 Grid::~Grid()
 {
+}
+
+void Grid::init_cells()
+{
+	//get vertex attribute location
+	GLfloat cell_width = 2.0f / width;
+	GLfloat cell_height = 2.0f / height;
+    //after printing this out, im like 99% sure this is correct, but still nothing shows up
+    for (auto row : cells)
+    {
+    	 for (auto cell : row)
+    	 {
+    	    	std::vector<GLfloat> vertex_data = 
+    			{
+    				(-1.0f + (cell.pos.x*cell_width)), (-1.0f + (cell.pos.y*cell_height)), 0.0f,
+    				((-1.0f + cell_width) + (cell.pos.x*cell_width)), (-1.0f + (cell.pos.y*cell_height)), 0.0f,
+    				(-1.0f + (cell.pos.x*cell_width)), ((-1.0f + cell_height) + (cell.pos.y*cell_height)), 0.0f,
+    				(-1.0f + cell_width) + (cell.pos.x*cell_width), ((-1.0f + cell_height) + (cell.pos.y*cell_height)), 0.0f
+    			};
+    
+    			glBufferData(GL_ARRAY_BUFFER, vertex_data.size(), vertex_data.data(), GL_DYNAMIC_DRAW);
+    			CHECK_GL_ERR();
+    			//set vertex data 
+    			glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (void*)0);
+    			CHECK_GL_ERR();
+    			//enable vertex position 
+    			glEnableVertexAttribArray(0);
+    			CHECK_GL_ERR();
+    			glBindBuffer(GL_ARRAY_BUFFER, 0);
+    			CHECK_GL_ERR();
+    			glBindVertexArray(VAOs[cell.pos.x][cell.pos.y]);
+    			CHECK_GL_ERR();
+    	  }
+    }
 }
 
 //call update_cell for each cell in the grid
@@ -50,7 +82,7 @@ void Grid::render_grid(GLuint dead_program_id, GLuint alive_program_id)
 	{
 		for (int j = 0; j < this->height; ++j)
 		{
-			this->cells[i][j].render_cell(this->width, this->height, dead_program_id, alive_program_id);
+			this->cells[i][j].render_cell(dead_program_id, alive_program_id, this->VAOs[i][j]);
 		}
 	}
 	glFlush();
@@ -72,32 +104,16 @@ Cell::~Cell()
 }
 
 //draw a single cell
-void Cell::render_cell(int width, int height, GLuint dead_program_id, GLuint alive_program_id)
+void Cell::render_cell(GLuint dead_program_id, GLuint alive_program_id, GLuint VAO)
 {
-//	//get vertex attribute location
-//	GLfloat cell_width = 2.0f / width;
-//	GLfloat cell_height = 2.0f / height;
-	//after printing this out, im like 99% sure this is correct, but still nothing shows up
-//	GLfloat vertex_data[] = 
-//	{
-//		(-1.0f + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)), 0.0f,
-//		((-1.0f + cell_width) + (this->pos.x*cell_width)), (-1.0f + (this->pos.y*cell_height)), 0.0f,
-//		(-1.0f + (this->pos.x*cell_width)), ((-1.0f + cell_height) + (this->pos.y*cell_height)), 0.0f,
-//		(-1.0f + cell_width) + (this->pos.x*cell_width), ((-1.0f + cell_height) + (this->pos.y*cell_height)), 0.0f
-//	};
 
-	std::vector<GLfloat> vertex_data = 
-	{
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
-	};
 	std::vector<GLuint> program_ids = 
 	{
 		dead_program_id,
 		alive_program_id
 	};
-	Renderer::render(vertex_data, program_ids);
+
+	Renderer::render(program_ids, VAO, this->alive);
 }
 
 //main loop logic
